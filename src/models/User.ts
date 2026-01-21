@@ -4,6 +4,7 @@ export interface IUser extends Document {
   _id: Types.ObjectId;
   fullName: string;
   email: string;
+  username: string;
   mobile?: string;
   dateOfBirth?: Date;
   address?: {
@@ -19,6 +20,9 @@ export interface IUser extends Document {
   provider: 'google' | 'credentials';
   isAcceptingMessages?: boolean;
   // messages?: [string];
+  qualification?: string;
+  experiance?: string;
+  listOfSubjects?: string[];
   profileImage?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -27,6 +31,7 @@ export interface IUser extends Document {
 const UserSchema: Schema<IUser> = new Schema({
   fullName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
+  username: { type: String, required: true, unique: true },
   mobile: { type: String },
   dateOfBirth: { type: Date },
   address: {
@@ -35,6 +40,9 @@ const UserSchema: Schema<IUser> = new Schema({
     state: String,
     country: String,
   },
+  qualification: { type: String },
+  experiance: { type: String },
+  listOfSubjects: { type: [String] },
   role: {
     type: String,
     enum: ['user', 'startup', 'admin'],
@@ -44,7 +52,6 @@ const UserSchema: Schema<IUser> = new Schema({
   otp: { type: String },
   otpExpires: { type: Date },
   isVerified: { type: Boolean, default: false },
-  profileImage: { type: String },
   isAcceptingMessages: { type: Boolean, default: true },
   // messages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Message' }],
 }, { timestamps: true });

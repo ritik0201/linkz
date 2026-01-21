@@ -6,10 +6,16 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     await dbConnect();
-    const { fullName, email, mobile } = await req.json();
+    const { fullName, email, mobile, username } = await req.json();
 
-    if (!email) {
-      return NextResponse.json({ message: "Email is required" }, { status: 400 });
+    if (!email || !username) {
+      return NextResponse.json({ message: "Email and Username are required" }, { status: 400 });
+    }
+
+    // Check if username is taken by another user
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername && existingUsername.email !== email) {
+      return NextResponse.json({ message: "Username already taken" }, { status: 400 });
     }
 
     // Generate OTP and expiry time
@@ -23,9 +29,12 @@ export async function POST(req: Request) {
         fullName,
         email,
         mobile,
+        username,
         isVerified: false,
         role: 'user',
       });
+    } else if (!user.username) {
+      user.username = username;
     }
 
     // Update OTP details
