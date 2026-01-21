@@ -13,24 +13,22 @@ export async function POST(request: NextRequest) {
       fullName,
       email,
       mobile,
-      experiance,
-      profileImage,
+      username,
     } = body;
 
    
 
-    if (!fullName || !email) {
-      return NextResponse.json({ message: "Full name and email are required" }, { status: 400 });
+    if (!fullName || !email || !username) {
+      return NextResponse.json({ message: "Full name, email and username are required" }, { status: 400 });
     }
     // this is testing phase
-    const existingUser = await User.findOne({ email });
-    
-    // if (existingUser && existingUser.role === 'startup') {
-    //   return NextResponse.json({ message: "User already exists. Please login." }, { status: 409 });
-    // }
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     
     if (existingUser) {
-      return NextResponse.json({ message: `Email ID already exists with role: ${existingUser.role}` }, { status: 409 });
+      if (existingUser.email === email) {
+        return NextResponse.json({ message: `Email ID already exists with role: ${existingUser.role}` }, { status: 409 });
+      }
+      return NextResponse.json({ message: "Username already taken" }, { status: 409 });
     }
 
 
@@ -41,6 +39,7 @@ export async function POST(request: NextRequest) {
       fullName,
       email,
       mobile,
+      username,
       isVerified: false,
       role: "startup",
     });
