@@ -2,6 +2,7 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { sendOtpEmail } from "@/lib/sendOtp";
 
 export async function POST(req: Request) {
   try {
@@ -21,10 +22,31 @@ export async function POST(req: Request) {
     // Find or create user
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return NextResponse.json({ message: "User already exists with this email" }, { status: 400 });
+      if (existingUser.isVerified) {
+        return NextResponse.json({ message: "User already exists with this email" }, { status: 400 });
+      } else {
+        // Resend OTP for unverified user
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        existingUser.otp = otp;
+        existingUser.otpExpires = otpExpires;
+        existingUser.password = hashedPassword;
+        existingUser.fullName = fullName;
+        existingUser.username = username;
+        
+        await existingUser.save();
+        await sendOtpEmail(email, otp);
+        
+        return NextResponse.json({ message: "OTP resent. Please verify your email." }, { status: 201 });
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     const user = new User({
       fullName,
@@ -32,13 +54,16 @@ export async function POST(req: Request) {
       mobile,
       username,
       password: hashedPassword,
-      isVerified: true, // Auto-verify for now since we removed OTP
+      isVerified: false,
       role: 'user',
+      otp,
+      otpExpires,
     });
 
     await user.save();
+    await sendOtpEmail(email, otp);
 
-    return NextResponse.json({ message: "User created successfully!" }, { status: 201 });
+    return NextResponse.json({ message: "User created successfully! OTP sent to email." }, { status: 201 });
   } catch (error) {
     console.error("Signup Error:", error);
     return NextResponse.json(
