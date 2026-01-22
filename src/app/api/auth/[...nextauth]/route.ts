@@ -5,6 +5,7 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import { IUser } from "@/models/User";
 import { NextRequest } from "next/server";
+import bcrypt from "bcryptjs";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -12,13 +13,17 @@ export const authOptions: AuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text" },
-        otp: { label: "OTP", type: "text" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials: Record<string, string> | undefined): Promise<NextAuthUser | null> {
         await dbConnect();
         try {
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error("Email and password are required.");
+          }
+
           const user: IUser | null = await User.findOne({
-            email: credentials?.email,
+            email: credentials.email,
           });
 
           if (!user) {
@@ -30,22 +35,11 @@ export const authOptions: AuthOptions = {
             throw new Error(`This login is for ${credentials.requiredRole}s only.`);
           }
 
-          if (user.otp !== credentials?.otp) {
-            throw new Error("Incorrect OTP.");
-          }
+          const isValid = await bcrypt.compare(credentials.password, user.password || "");
 
-          if (user.otpExpires && user.otpExpires < new Date()) {
-            throw new Error("OTP has expired.");
+          if (!isValid) {
+            throw new Error("Invalid password.");
           }
-
-          // Mark as verified if they are signing up
-          if (!user.isVerified) {
-            user.isVerified = true;
-          }
-
-          user.otp = undefined;
-          user.otpExpires = undefined;
-          await user.save();
 
           return {
             id: user._id.toString(),
@@ -102,7 +96,7 @@ export const authOptions: AuthOptions = {
     signIn: '/',
     signOut: '/',// Redirect to home page for sign-in
   },
-  session: { 
+  session: {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,

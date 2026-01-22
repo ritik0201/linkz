@@ -1,15 +1,15 @@
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
-import { sendOtpEmail } from "@/lib/sendOtp";
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
     await dbConnect();
-    const { fullName, email, mobile, username } = await req.json();
+    const { fullName, email, mobile, username, password } = await req.json();
 
-    if (!email || !username) {
-      return NextResponse.json({ message: "Email and Username are required" }, { status: 400 });
+    if (!email || !username || !password) {
+      return NextResponse.json({ message: "Email, Username, and Password are required" }, { status: 400 });
     }
 
     // Check if username is taken by another user
@@ -18,34 +18,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Username already taken" }, { status: 400 });
     }
 
-    // Generate OTP and expiry time
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit
-    const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // valid for 5 minutes
-
     // Find or create user
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = new User({
-        fullName,
-        email,
-        mobile,
-        username,
-        isVerified: false,
-        role: 'user',
-      });
-    } else if (!user.username) {
-      user.username = username;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return NextResponse.json({ message: "User already exists with this email" }, { status: 400 });
     }
 
-    // Update OTP details
-    user.otp = otp;
-    user.otpExpires = otpExpires;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      fullName,
+      email,
+      mobile,
+      username,
+      password: hashedPassword,
+      isVerified: true, // Auto-verify for now since we removed OTP
+      role: 'user',
+    });
+
     await user.save();
 
-    // Send OTP via email
-    await sendOtpEmail(email, otp);
-
-    return NextResponse.json({ message: "OTP sent successfully!" }, { status: 200 });
+    return NextResponse.json({ message: "User created successfully!" }, { status: 201 });
   } catch (error) {
     console.error("Signup Error:", error);
     return NextResponse.json(
