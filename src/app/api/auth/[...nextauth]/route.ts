@@ -14,12 +14,60 @@ export const authOptions: AuthOptions = {
       credentials: {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
+        otp: { label: "OTP", type: "text" }
       },
       async authorize(credentials: Record<string, string> | undefined): Promise<NextAuthUser | null> {
         await dbConnect();
         try {
-          if (!credentials?.email || !credentials?.password) {
-            throw new Error("Email and password are required.");
+          if (!credentials?.email) {
+            throw new Error("Email is required.");
+          }
+
+          // Case 1: OTP Login (Admin)
+          if (credentials?.otp) {
+            const user: IUser | null = await User.findOne({
+              email: credentials.email,
+            });
+
+            if (!user) {
+              throw new Error("No user found with this email.");
+            }
+
+            if (credentials.requiredRole && user.role !== credentials.requiredRole) {
+              throw new Error(`This login is for ${credentials.requiredRole}s only.`);
+            }
+
+            if (!user.otp || !user.otpExpires) {
+              throw new Error("No OTP found. Please request a new one.");
+            }
+
+            if (user.otp !== credentials.otp) {
+              throw new Error("Invalid OTP.");
+            }
+
+            if (user.otpExpires < new Date()) {
+              throw new Error("OTP has expired. Please request a new one.");
+            }
+
+            // OTP verified successfully
+            // Clear OTP fields
+            user.otp = undefined;
+            user.otpExpires = undefined;
+            await user.save();
+
+            return {
+              id: user._id.toString(),
+              email: user.email,
+              fullName: user.fullName,
+              isVerified: user.isVerified,
+              mobile: user.mobile,
+              role: user.role,
+            };
+          }
+
+          // Case 2: Password Login
+          if (!credentials?.password) {
+            throw new Error("Password is required.");
           }
 
           const user: IUser | null = await User.findOne({

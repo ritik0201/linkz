@@ -59,10 +59,7 @@ const SignupAndSiginForUser = () => {
                     body: JSON.stringify({
                         fullName: formData.fullName,
                         email: formData.email,
-                        username: formData.username, // We need to add a username field to the UI or generate one. The UI doesn't have it explicitly in the previous code? 
-                        // Wait, previous code had Full Name, Email, Password. 
-                        // The backend expects 'username'. I should add a username field or map email to username (but username is unique).
-                        // Let's Add Username field to the form.
+                        username: formData.username,
                         password: formData.password,
                     }),
                 });
