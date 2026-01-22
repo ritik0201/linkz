@@ -24,6 +24,7 @@ export interface IUser extends Document {
   experiance?: string;
   listOfSubjects?: string[];
   profileImage?: string;
+  password?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,6 +33,7 @@ const UserSchema: Schema<IUser> = new Schema({
   fullName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   username: { type: String, required: true, unique: true },
+  password: { type: String },
   mobile: { type: String },
   dateOfBirth: { type: Date },
   address: {
