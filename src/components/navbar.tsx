@@ -27,16 +27,18 @@ const Navbar = () => {
     return (
         <nav
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-                    ? "bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md shadow-lg border-b border-zinc-200 dark:border-zinc-800 py-3"
-                    : "bg-transparent py-5"
+                ? "bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md shadow-lg border-b border-zinc-200 dark:border-zinc-800 py-3"
+                : "bg-transparent py-5"
                 }`}
         >
             <div className="container mx-auto px-4 md:px-6">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
+                    {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 group">
-                        <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-indigo-500/20 shadow-lg group-hover:scale-110 transition-transform">
-                            <Rocket size={24} />
+                        <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-indigo-500/20 shadow-lg group-hover:scale-110 transition-transform overflow-hidden">
+                            {/* <Rocket size={24} /> */}
+                            <img src="/logo.jpg" alt="Linkz Logo" className="w-full h-full object-cover" />
                         </div>
                         <span className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">
                             Linkz

@@ -26,31 +26,32 @@ const handler = NextAuth({
           throw new Error("No user found with this email");
         }
 
+        // Role enforcement is critical for Separate Admin Login
         if (credentials?.requiredRole && user.role !== credentials.requiredRole) {
           throw new Error(`Only ${credentials.requiredRole} can login`);
         }
 
         // OTP Login Flow
         if (credentials.otp) {
-            if (user.otp !== credentials.otp) {
-                throw new Error("Invalid OTP");
-            }
-            
-            if (user.otpExpires && new Date() > user.otpExpires) {
-                throw new Error("OTP expired");
-            }
+          if (user.otp !== credentials.otp) {
+            throw new Error("Invalid OTP");
+          }
 
-            // Clear OTP after successful login
-            user.otp = undefined;
-            user.otpExpires = undefined;
-            await user.save();
+          if (user.otpExpires && new Date() > user.otpExpires) {
+            throw new Error("OTP expired");
+          }
 
-            return user;
+          // Clear OTP after successful login
+          user.otp = undefined;
+          user.otpExpires = undefined;
+          await user.save();
+
+          return user;
         }
 
         // Password Login Flow
         if (!credentials.password) {
-             throw new Error("Password is required");
+          throw new Error("Password is required");
         }
 
         if (!user.password) {

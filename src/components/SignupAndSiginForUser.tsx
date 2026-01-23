@@ -46,7 +46,7 @@ const SignupAndSiginForUser = () => {
                         });
                         const data = await res.json();
                         if (!res.ok) throw new Error(data.message || "Failed to send OTP");
-                        
+
                         setLoginOtpSent(true);
                         alert("OTP sent successfully!");
                     } else {
@@ -141,8 +141,8 @@ const SignupAndSiginForUser = () => {
                             {isLogin
                                 ? "Enter your credentials to access your account"
                                 : verificationStep
-                                ? `Enter the code sent to ${formData.email}`
-                                : "Join us today and start your journey"}
+                                    ? `Enter the code sent to ${formData.email}`
+                                    : "Join us today and start your journey"}
                         </p>
                     </div>
 
@@ -286,25 +286,25 @@ const SignupAndSiginForUser = () => {
                                     </>
                                 )}
                                 {((!isLogin && !verificationStep) || (isLogin && loginMethod === 'password')) && (
-                                        <div>
-                                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                                                Password
-                                            </label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
-                                                    <Lock size={18} />
-                                                </div>
-                                                <input
-                                                    type="password"
-                                                    name="password"
-                                                    value={formData.password}
-                                                    onChange={handleInputChange}
-                                                    className="block w-full pl-10 pr-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all dark:text-white"
-                                                    placeholder="••••••••"
-                                                    required
-                                                />
+                                    <div>
+                                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                            Password
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                                                <Lock size={18} />
                                             </div>
+                                            <input
+                                                type="password"
+                                                name="password"
+                                                value={formData.password}
+                                                onChange={handleInputChange}
+                                                className="block w-full pl-10 pr-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all dark:text-white"
+                                                placeholder="••••••••"
+                                                required
+                                            />
                                         </div>
+                                    </div>
                                 )}
 
                                 {((!isLogin && verificationStep) || (isLogin && loginMethod === 'otp' && loginOtpSent)) && (
