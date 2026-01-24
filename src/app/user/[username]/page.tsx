@@ -594,6 +594,23 @@ const LinkedInProfilePage = () => {
     setPosts([newPost, ...posts]);
   };
 
+  const handleCreateProject = async (formData: FormData) => {
+    // This function sends the project data to the backend API.
+    const res = await fetch('/api/auth/ProjectOrResearch', {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to create project.');
+    }
+
+    // TODO: Re-fetch projects or update state here to show the new project
+    alert('Project created successfully!');
+    // You might want to trigger a refresh of the projects list here.
+  };
+
   const handleSaveProfile = async (sectionUpdates: any) => {
     if (!profile) return;
 
@@ -749,7 +766,7 @@ const LinkedInProfilePage = () => {
                     </div>
                   </div>
 
-                  <div className="hidden md:flex flex-col gap-2 min-w-[220px]">
+                  <div className="hidden md:flex flex-col gap-2 min-w-55">
                       {latestExperience && (
                           <div className="flex items-center gap-2 group cursor-pointer">
                               <div className="w-8 h-8 bg-zinc-700 rounded flex items-center justify-center text-white shrink-0"><Briefcase size={14} /></div>
@@ -801,7 +818,7 @@ const LinkedInProfilePage = () => {
                 onClick={() => setIsModalOpen(true)}
                 className="flex-1 text-left bg-transparent border border-zinc-600 hover:bg-zinc-800 rounded-full px-5 py-3 text-zinc-400 font-medium transition-colors"
               >
-                Start a post
+                Share a Project or Research...
               </button>
             </div>
           </div>
@@ -809,8 +826,9 @@ const LinkedInProfilePage = () => {
           <CreatePostModal
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
-            onCreatePost={handleCreatePost}
+            onSubmit={handleCreateProject}
             user={{
+              _id: user._id,
               name: profile.user.fullName,
               avatar: profilePicture || user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop",
               headline: headline || "",
@@ -898,7 +916,7 @@ const LinkedInProfilePage = () => {
             <div className="space-y-6">
               {experience?.map((exp, i) => (
                 <div key={i} className="flex gap-4">
-                  <div className="w-12 h-12 bg-zinc-700 rounded-lg flex items-center justify-center text-white flex-shrink-0">
+                  <div className="w-12 h-12 bg-zinc-700 rounded-lg flex items-center justify-center text-white shrink-0">
                     <Briefcase size={24} />
                   </div>
                   <div>
@@ -928,7 +946,7 @@ const LinkedInProfilePage = () => {
             </div>
             {education?.map((edu, i) => (
               <div key={i} className="flex gap-4">
-                <div className="w-12 h-12 bg-zinc-700 rounded-lg flex items-center justify-center text-white flex-shrink-0">
+                <div className="w-12 h-12 bg-zinc-700 rounded-lg flex items-center justify-center text-white shrink-0">
                   <GraduationCap size={28} />
                 </div>
                 <div>
@@ -956,7 +974,7 @@ const LinkedInProfilePage = () => {
             </div>
             {certificates?.map((cert, i) => (
               <div key={i} className="flex gap-4 mb-4 last:mb-0">
-                <div className="w-12 h-12 bg-zinc-700 rounded-lg flex items-center justify-center text-white flex-shrink-0">
+                <div className="w-12 h-12 bg-zinc-700 rounded-lg flex items-center justify-center text-white shrink-0">
                   <Award size={24} />
                 </div>
                 <div>

@@ -11,6 +11,7 @@
   "dependencies": {
     "@types/nodemailer": "^7.0.5",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.9.0",
     "framer-motion": "^12.29.0",
     "lucide-react": "^0.562.0",
     "mongoose": "^9.1.5",
