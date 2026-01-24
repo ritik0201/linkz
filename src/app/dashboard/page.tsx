@@ -23,7 +23,8 @@ export default function DashboardRedirectPage() {
     } else if (userRole === 'startup') {
       router.replace('/startup/dashboard');
     } else if (userRole === 'user') {
-      router.replace('/user/dashboard');
+      const username = session?.user?.name || session?.user.username?.split('@')[0] || 'profile';
+      router.replace(`/user/${encodeURIComponent(username)}`);
     } else {
       // Fallback for unknown roles or if role is not set
       router.replace('/');
