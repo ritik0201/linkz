@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import ProjectOrResearch from "@/models/projectOrResearch";
 import User from "@/models/User";
+import Profile from "@/models/Profile";
 import cloudinary from "@/lib/cloudinary";
 
 // Helper to upload to Cloudinary
@@ -81,9 +82,22 @@ export async function GET(req: Request) {
       return NextResponse.json({ data: [] }, { status: 200 });
     }
 
-    const data = await ProjectOrResearch.find({ userId: user._id })
+    // Fetch profile to get profilePicture
+    const profile = await Profile.findOne({ user: user._id }).select("profilePicture");
+
+    const posts = await ProjectOrResearch.find({ userId: user._id })
       .sort({ createdAt: -1 })
-      .populate({ path: "userId", model: User, select: "fullName username profileImage" });
+      .populate({ path: "userId", model: User, select: "fullName username profileImage" })
+      .lean();
+
+    const data = posts.map((post: any) => {
+      if (post.userId && profile?.profilePicture) {
+        post.userId.profileImage = profile.profilePicture;
+        post.userId.profilePicture = profile.profilePicture;
+      }
+      return post;
+    });
+
     return NextResponse.json({ data }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -94,10 +108,10 @@ export async function PATCH(req: Request) {
   try {
     await dbConnect();
     const body = await req.json();
-    const { postId, username, action } = body;
+    const { postId, username, action, targetUser, text } = body;
 
-    if (!postId || !username || !action) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!postId || !action) {
+      return NextResponse.json({ error: "Missing required fields: postId or action" }, { status: 400 });
     }
 
     const project = await ProjectOrResearch.findById(postId);
@@ -107,17 +121,32 @@ export async function PATCH(req: Request) {
     }
 
     if (action === "like") {
+      if (!username) return NextResponse.json({ error: "Username required for like" }, { status: 400 });
       if (project.likes.includes(username)) {
         project.likes = project.likes.filter((u: string) => u !== username);
       } else {
         project.likes.push(username);
       }
     } else if (action === "interested") {
+      if (!username) return NextResponse.json({ error: "Username required for interested" }, { status: 400 });
       if (project.interested.includes(username)) {
         project.interested = project.interested.filter((u: string) => u !== username);
       } else {
         project.interested.push(username);
       }
+    } else if (action === "approve") {
+      if (!targetUser) return NextResponse.json({ error: "Target user required for approval" }, { status: 400 });
+      
+      // Remove from interested
+      project.interested = project.interested.filter((u: string) => u !== targetUser);
+      
+      // Add to teamMembers
+      if (!project.teamMembers.includes(targetUser)) {
+        project.teamMembers.push(targetUser);
+      }
+    } else if (action === "comment") {
+      if (!username || !text) return NextResponse.json({ error: "Username and text required for comment" }, { status: 400 });
+      project.comments.push({ username, text, createdAt: new Date() });
     }
 
     await project.save();

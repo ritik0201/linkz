@@ -1,7 +1,7 @@
-import { Schema, model, models, Document } from 'mongoose';
+import { Schema, model, models, Document, Types } from 'mongoose';
 
 export interface IProfile extends Document {
-  user: Schema.Types.ObjectId;
+  user: Types.ObjectId;
   headline?: string;
   bio?: string;
   location?: string;

@@ -2,29 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Rocket,
-  Users,
-  Target,
-  Shield,
-  Heart,
-  MessageCircle,
-  Share2,
-  Image as ImageIcon,
-  Send,
-  MoreHorizontal,
-  ThumbsUp,
-  Loader2,
-  User as UserIcon,
-  PlusCircle,
-  Star
-} from "lucide-react";
+import { ArrowRight, Rocket, Users, Target, Shield, Loader2, PlusCircle, MapPin, Briefcase } from "lucide-react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import CreatePostModal from "@/components/CreatePostModal";
 import { useSession } from "next-auth/react";
-import { motion, AnimatePresence } from "framer-motion";
+import PosterCard from "@/components/PosterCard";
 
 interface FeedItem {
   _id: string;
@@ -61,8 +44,8 @@ export default function Home() {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [commentingOn, setCommentingOn] = useState<string | null>(null);
-  const [commentText, setCommentText] = useState("");
+  const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
+  const [usersMap, setUsersMap] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -72,12 +55,33 @@ export default function Home() {
     }
   }, [status]);
 
+  const shuffleArray = (array: any[]) => {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  };
+
   const fetchFeed = async () => {
     try {
       const res = await fetch("/api/posts");
       const data = await res.json();
       if (data.data) {
-        setItems(data.data);
+        const posts = data.data;
+        const map: Record<string, any> = {};
+        
+        // Build usersMap and normalize post data for PosterCard
+        posts.forEach((p: any) => {
+          if (p.userId) map[p.userId.username] = p.userId;
+          p.comments?.forEach((c: any) => {
+            if (c.userId) map[c.userId.username] = c.userId;
+            c.username = c.userId?.username; // Ensure username exists for PosterCard lookup
+          });
+        });
+        
+        setUsersMap(map);
+        setItems(shuffleArray(posts));
       }
     } catch (error) {
       console.error("Failed to fetch feed:", error);
@@ -102,58 +106,77 @@ export default function Home() {
     }
   };
 
-  const handleAction = async (postId: string, action: "like" | "interested", type: 'post' | 'project') => {
-    if (!session?.user) return;
+  const handleCommentSubmit = async (e: React.FormEvent, postId: string) => {
+    e.preventDefault();
+    const text = commentTexts[postId];
+    if (!session?.user || !text?.trim()) return;
+    
     // @ts-ignore
     const username = session.user.username;
-    // @ts-ignore
-    const userId = session.user._id || session.user.id;
-
-    const apiPath = type === 'project' ? "/api/auth/ProjectOrResearch" : "/api/posts";
-    const body = type === 'project'
-      ? { postId, username, action }
-      : { postId, userId, action };
 
     try {
-      const res = await fetch(apiPath, {
+      const res = await fetch("/api/auth/ProjectOrResearch", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ postId, username, action: "comment", text }),
       });
       const data = await res.json();
       if (data.data) {
-        setItems(items.map(item => item._id === postId ? { ...data.data, type: item.type } : item));
+        // Update the specific post in the list
+        setItems(prev => prev.map(item => {
+            if (item._id === postId) {
+                // Ensure comments have username for PosterCard
+                const updatedPost = data.data;
+                updatedPost.comments?.forEach((c: any) => {
+                    c.username = c.username || c.userId?.username;
+                });
+                return { ...item, ...updatedPost };
+            }
+            return item;
+        }));
+        setCommentTexts(prev => ({ ...prev, [postId]: "" }));
       }
     } catch (error) {
-      console.error(`Failed to ${action}:`, error);
+      console.error("Failed to post comment:", error);
     }
   };
 
-  const handleComment = async (postId: string) => {
-    if (!session?.user || !commentText.trim()) return;
+  const handleInteraction = async (postId: string, action: 'like' | 'interested') => {
     // @ts-ignore
-    const userId = session.user._id || session.user.id;
+    if (!session?.user?.username) return;
+    // @ts-ignore
+    const userIdentifier = session.user.username;
+
+    setItems(prevItems => prevItems.map(item => {
+      if (item._id === postId) {
+        const list = action === 'like' ? item.likes : (item.interested || []);
+        const isActive = list.includes(userIdentifier);
+        const newList = isActive 
+          ? list.filter((u: string) => u !== userIdentifier)
+          : [...list, userIdentifier];
+        
+        return {
+          ...item,
+          [action === 'like' ? 'likes' : 'interested']: newList
+        };
+      }
+      return item;
+    }));
 
     try {
-      const res = await fetch("/api/posts", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId, userId, action: "comment", text: commentText }),
+      await fetch('/api/auth/ProjectOrResearch', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId, action, username: userIdentifier }),
       });
-      const data = await res.json();
-      if (data.data) {
-        setItems(items.map(item => item._id === postId ? { ...data.data, type: item.type } : item));
-        setCommentText("");
-        setCommentingOn(null);
-      }
     } catch (error) {
-      console.error("Failed to add comment:", error);
+      console.error("Failed to update interaction", error);
     }
   };
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-white dark:bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <Loader2 className="animate-spin text-indigo-600" size={40} />
       </div>
     );
@@ -162,206 +185,67 @@ export default function Home() {
   // Logged In View
   if (session) {
     return (
-      <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+      <main className="min-h-screen bg-black">
         <Navbar />
-        <div className="container mx-auto pt-28 pb-12 px-4 max-w-6xl">
-          {/* Header & Create Button */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">Community Feed</h1>
-              <p className="text-zinc-500 dark:text-zinc-400">Discover projects and updates from the Linkz community</p>
+        <div className="container mx-auto pt-24 pb-12 px-4 max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Left Sidebar - User Profile */}
+            <div className="hidden lg:block lg:col-span-3 sticky top-24 self-start">
+              <FeedProfileCard user={session.user} />
             </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-indigo-500/20 transition-all border-none cursor-pointer"
-            >
-              <PlusCircle size={20} />
-              Share Project or Research
-            </button>
-          </div>
 
-          {/* Feed Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {loading ? (
-              <div className="col-span-full flex flex-col items-center justify-center py-20 gap-4">
-                <Loader2 className="animate-spin text-indigo-600" size={40} />
-                <p className="text-zinc-500">Loading feed...</p>
-              </div>
-            ) : items.length === 0 ? (
-              <div className="col-span-full text-center py-20 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                <p className="text-zinc-500">No updates yet. Be the first to share your work!</p>
-              </div>
-            ) : (
-              items.map((item) => (
-                <motion.div
-                  key={item._id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
+            {/* Main Feed */}
+            <div className="lg:col-span-6 space-y-6">
+              {/* Create Post Button */}
+              <div className="bg-[#2b2b2b] p-4 rounded-2xl shadow-lg border border-zinc-700/50 flex items-center gap-4">
+                <img 
+                  // @ts-ignore
+                  src={session.user.image || session.user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"} 
+                  alt="Profile" 
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex-1 text-left bg-zinc-800/50 hover:bg-zinc-800 text-zinc-400 px-6 py-3 rounded-full transition-all border border-zinc-700/50 font-medium"
                 >
-                  <div className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${item.type === 'project'
-                      ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                      : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-                    }`}>
-                    {item.type === 'project' ? <Rocket size={12} /> : <ImageIcon size={12} />}
-                    {item.type === 'project' ? (item.category || 'Project') : 'Post'}
-                  </div>
+                  Share a project or research...
+                </button>
+              </div>
 
-                  <div className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden border border-zinc-100 dark:border-zinc-700/50">
-                        {item.userId.profileImage ? (
-                          <img src={item.userId.profileImage} alt={item.userId.fullName} className="w-full h-full object-cover" />
-                        ) : (
-                          <UserIcon className="text-zinc-400" size={20} />
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-sm tracking-tight">{item.userId.fullName}</h4>
-                        <p className="text-[10px] text-zinc-500 uppercase tracking-tighter">@{item.userId.username} • {new Date(item.createdAt).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    <button className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 border-none bg-transparent cursor-pointer">
-                      <MoreHorizontal size={20} />
-                    </button>
-                  </div>
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <Loader2 className="animate-spin text-indigo-600" size={40} />
+                  <p className="text-zinc-500">Loading feed...</p>
+                </div>
+              ) : items.length === 0 ? (
+                <div className="text-center py-20 bg-[#2b2b2b] rounded-2xl border border-zinc-700/50">
+                  <p className="text-gray-400">No updates yet. Be the first to share your work!</p>
+                </div>
+              ) : (
+                items.map((item) => (
+                  <PosterCard
+                    key={item._id}
+                    post={{
+                        ...item,
+                        description: item.content, // Map content to description for PosterCard
+                        coverImage: item.image,    // Map image to coverImage for PosterCard
+                    }}
+                    commentText={commentTexts[item._id] || ""}
+                    setCommentText={(text) => setCommentTexts(prev => ({ ...prev, [item._id]: text }))}
+                    handleCommentSubmit={(e) => handleCommentSubmit(e, item._id)}
+                    usersMap={usersMap}
+                    onLike={() => handleInteraction(item._id, 'like')}
+                    onInterested={() => handleInteraction(item._id, 'interested')}
+                    currentUser={session?.user}
+                  />
+                ))
+              )}
+            </div>
 
-                  <div className="px-4 pb-4 flex-grow">
-                    {item.topic && <h3 className="font-bold text-lg mb-2 text-indigo-600 dark:text-indigo-400">{item.topic}</h3>}
-                    <p className="whitespace-pre-wrap text-zinc-700 dark:text-zinc-300 leading-relaxed text-sm line-clamp-4">{item.content}</p>
-
-                    {item.type === 'project' && (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {item.teamMembers && item.teamMembers.length > 0 && (
-                          <div className="flex items-center gap-1 px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-md text-[10px] text-zinc-500">
-                            <Users size={12} /> {item.teamMembers.join(", ")}
-                          </div>
-                        )}
-                        {item.link && (
-                          <a href={item.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-2 py-1 bg-indigo-50 dark:bg-indigo-900/20 rounded-md text-[10px] text-indigo-500 hover:underline">
-                            <Target size={12} /> View Project
-                          </a>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {item.image && (
-                    <div className="aspect-video w-full overflow-hidden border-y border-zinc-50 dark:border-zinc-800/50">
-                      <img src={item.image} alt="Content" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-
-                  <div className="px-4 py-3 flex items-center justify-between border-t border-zinc-50 dark:border-zinc-800/50">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleAction(item._id, "like", item.type)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all border-none bg-transparent cursor-pointer text-xs ${
-                          // @ts-ignore
-                          item.likes.includes(session.user._id || session.user.id) || item.likes.includes(session.user.username)
-                            ? "text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
-                            : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"
-                          }`}
-                      >
-                        <Heart size={16} fill={
-                          // @ts-ignore
-                          item.likes.includes(session.user._id || session.user.id) || item.likes.includes(session.user.username) ? "currentColor" : "none"} />
-                        <span className="font-bold">{item.likes.length}</span>
-                      </button>
-
-                      {item.type === 'project' && (
-                        <button
-                          onClick={() => handleAction(item._id, "interested", item.type)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all border-none bg-transparent cursor-pointer text-xs ${
-                            // @ts-ignore
-                            item.interested?.includes(session.user.username)
-                              ? "text-amber-600 bg-amber-50 dark:bg-amber-900/20"
-                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"
-                            }`}
-                        >
-                          <Star size={16} fill={
-                            // @ts-ignore
-                            item.interested?.includes(session.user.username) ? "currentColor" : "none"
-                          } />
-                          <span className="font-bold">{item.interested?.length || 0}</span>
-                        </button>
-                      )}
-
-                      {item.type === 'post' && (
-                        <button
-                          onClick={() => setCommentingOn(commentingOn === item._id ? null : item._id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 rounded-full transition-all border-none bg-transparent cursor-pointer text-xs"
-                        >
-                          <MessageCircle size={16} />
-                          <span className="font-bold">{item.comments.length}</span>
-                        </button>
-                      )}
-                    </div>
-
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 rounded-full transition-all border-none bg-transparent cursor-pointer text-xs">
-                      <Share2 size={16} />
-                    </button>
-                  </div>
-
-                  <AnimatePresence>
-                    {commentingOn === item._id && item.type === 'post' && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="px-4 pb-4 overflow-hidden border-t border-zinc-50 dark:border-zinc-800/20"
-                      >
-                        <div className="pt-4 space-y-4">
-                          <div className="flex gap-2">
-                            <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden flex-shrink-0">
-                              {session.user?.image ? (
-                                <img src={session.user.image} alt="User" className="w-full h-full object-cover" />
-                              ) : (
-                                <UserIcon size={14} />
-                              )}
-                            </div>
-                            <div className="flex-1 flex gap-2">
-                              <input
-                                value={commentText}
-                                onChange={(e) => setCommentText(e.target.value)}
-                                placeholder="Write a comment..."
-                                className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full px-4 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none"
-                                onKeyPress={(e) => e.key === 'Enter' && handleComment(item._id)}
-                              />
-                              <button
-                                onClick={() => handleComment(item._id)}
-                                className="text-indigo-600 font-bold text-[11px] px-2 border-none bg-transparent cursor-pointer"
-                              >
-                                Post
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                            {item.comments.map((comment, idx) => (
-                              <div key={idx} className="flex gap-3">
-                                <div className="w-7 h-7 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                  {comment.userId.profileImage ? (
-                                    <img src={comment.userId.profileImage} alt={comment.userId.fullName} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <UserIcon size={12} />
-                                  )}
-                                </div>
-                                <div className="bg-zinc-50 dark:bg-zinc-800/30 rounded-2xl px-3 py-2 flex-1">
-                                  <h5 className="font-bold text-[9px] tracking-tight">{comment.userId.fullName}</h5>
-                                  <p className="text-[11px] text-zinc-700 dark:text-zinc-300">{comment.text}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))
-            )}
+            {/* Right Sidebar - Suggestions */}
+            <div className="hidden lg:block lg:col-span-3 sticky top-24 self-start">
+              <SuggestionsCard />
+            </div>
           </div>
         </div>
 
@@ -395,25 +279,25 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-white dark:bg-zinc-950">
+    <main className="min-h-screen bg-black">
       <Navbar />
       <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-900/30 text-indigo-400 text-sm font-medium mb-4">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
               </span>
               The Future of Startup Hiring
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white">
               Connect with <br />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 dark:from-indigo-400 dark:via-violet-400 dark:to-purple-400">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400">
                 World-Class Talent
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
               Linkz bridges the gap between ambitious startups and exceptional developers. Build your dream team today.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -426,7 +310,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/user/signin"
-                className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-indigo-600 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-500 rounded-xl font-bold text-lg transition-all hover:-translate-y-1 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-8 py-4 bg-white border-2 border-gray-700 text-gray-900 hover:border-indigo-500 hover:text-indigo-500 rounded-xl font-bold text-lg transition-all hover:-translate-y-1 flex items-center justify-center gap-2"
               >
                 Find Work
                 <Users size={20} />
@@ -439,7 +323,7 @@ export default function Home() {
           <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-violet-500/10 rounded-full blur-[100px] animate-pulse delay-1000"></div>
         </div>
       </section>
-      <section className="py-24 bg-zinc-50 dark:bg-zinc-900/50">
+      <section className="py-24 bg-gray-900">
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <FeatureCard
@@ -466,13 +350,64 @@ export default function Home() {
 }
 
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) => (
-  <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 transition-colors group">
-    <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-6 group-hover:scale-110 transition-transform">
+  <div className="bg-black p-8 rounded-2xl border border-gray-700 hover:border-indigo-500 transition-colors group">
+    <div className="w-14 h-14 bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-400 mb-6 group-hover:scale-110 transition-transform">
       {icon}
     </div>
-    <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-3">{title}</h3>
-    <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+    <h3 className="text-xl font-bold text-white mb-3">{title}</h3>
+    <p className="text-gray-400 leading-relaxed">
       {description}
     </p>
+  </div>
+);
+
+const FeedProfileCard = ({ user }: { user: any }) => (
+  <div className="bg-[#2b2b2b] rounded-2xl overflow-hidden shadow-lg border border-zinc-700/50">
+    <div className="h-20 bg-linear-to-r from-indigo-600 to-violet-600"></div>
+    <div className="p-6 pt-0 relative text-center">
+      <div className="absolute -top-10 left-1/2 -translate-x-1/2">
+        <img
+          className="w-20 h-20 rounded-full border-4 border-[#2b2b2b] object-cover"
+          src={user.image || user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
+          alt={user.name}
+        />
+      </div>
+      <div className="mt-12">
+        <h2 className="text-xl font-bold text-white">{user.name || user.fullName}</h2>
+        <p className="text-zinc-400 text-sm mt-1">@{user.username}</p>
+        <p className="text-zinc-300 text-sm mt-3 line-clamp-2">{user.headline || "No headline yet."}</p>
+      </div>
+      <div className="mt-6 pt-4 border-t border-zinc-700/50 flex justify-between text-sm">
+        <div className="text-center">
+          <p className="text-zinc-400">Views</p>
+          <p className="text-white font-bold">1.2k</p>
+        </div>
+        <div className="text-center">
+          <p className="text-zinc-400">Projects</p>
+          <p className="text-white font-bold">8</p>
+        </div>
+      </div>
+      <Link href={`/user/${user.username}`} className="mt-6 block w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors text-sm font-medium">
+        View Profile
+      </Link>
+    </div>
+  </div>
+);
+
+const SuggestionsCard = () => (
+  <div className="bg-[#2b2b2b] p-5 rounded-2xl shadow-lg border border-zinc-700/50">
+    <h3 className="text-lg font-bold text-white mb-4">Suggested for you</h3>
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-zinc-700 animate-pulse"></div>
+          <div className="flex-1 space-y-2">
+            <div className="h-3 bg-zinc-700 rounded w-3/4 animate-pulse"></div>
+            <div className="h-2 bg-zinc-700 rounded w-1/2 animate-pulse"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+    <button className="mt-4 w-full text-indigo-400 text-sm font-medium hover:underline">View all suggestions</button>
   </div>
 );

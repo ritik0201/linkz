@@ -1,5 +1,11 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+export interface IComment {
+  username: string;
+  text: string;
+  createdAt: Date;
+}
+
 export interface IProjectOrResearch extends Document {
   userId: mongoose.Types.ObjectId;
   topic: string;
@@ -10,6 +16,7 @@ export interface IProjectOrResearch extends Document {
   link?: string;
   likes: string[];
   interested: string[];
+  comments: IComment[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +53,13 @@ const ProjectOrResearchSchema: Schema<IProjectOrResearch> = new Schema(
       type: [String],
       default: [],
     },
+    comments: [
+      {
+        username: { type: String, required: true },
+        text: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );

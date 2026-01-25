@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { Briefcase, GraduationCap, MapPin, Plus, Send, Star, Linkedin, Github, Twitter, MoreHorizontal, ThumbsUp, MessageSquare, Share2, Eye, Users, Phone, Pencil, X, Trash2, Award, LogOut, Camera } from 'lucide-react';
 import CreatePostModal from '@/components/CreatePostModal';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 const people = [
@@ -509,9 +509,27 @@ const EditCertificatesModal = ({ isOpen, onClose, certificates, onSave }: { isOp
   );
 };
 
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: () => void; onConfirm: () => void }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-[#2b2b2b] rounded-2xl w-full max-w-md border border-zinc-700 shadow-2xl p-6">
+        <h3 className="text-xl font-bold text-white mb-2">Delete Post?</h3>
+        <p className="text-zinc-400 mb-6">Are you sure you want to delete this post?</p>
+        <div className="flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors">Cancel</button>
+          <button onClick={onConfirm} className="px-4 py-2 rounded-full font-medium bg-red-600 text-white hover:bg-red-700 transition-colors">Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const LinkedInProfilePage = () => {
   const { data: session } = useSession();
   const params = useParams();
+  const router = useRouter();
   const username = params.username as string;
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -526,6 +544,17 @@ const LinkedInProfilePage = () => {
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
   const [isCertificatesModalOpen, setIsCertificatesModalOpen] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [activeMenuPostId, setActiveMenuPostId] = useState<string | number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<string | number | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   useEffect(() => {
     if (username) {
@@ -617,8 +646,8 @@ const LinkedInProfilePage = () => {
   };
 
   const handleInteraction = async (postId: string, action: 'like' | 'interested') => {
-    if (!session?.user?.email) return;
-    const userIdentifier = session.user.email;
+    if (!session?.user?.username) return;
+    const userIdentifier = session.user.username;
 
     setPosts(prevPosts => prevPosts.map(post => {
       if (post.id === postId) {
@@ -647,18 +676,30 @@ const LinkedInProfilePage = () => {
     }
   };
 
-  const handleDeletePost = async (postId: string) => {
-    if (!confirm("Are you sure you want to delete this post?")) return;
+  const handleDeletePost = (postId: string | number) => {
+    setActiveMenuPostId(null);
+    setPostToDelete(postId);
+    setIsDeleteModalOpen(true);
+  };
 
+  const confirmDelete = async () => {
+    if (!postToDelete) return;
     try {
-      const res = await fetch(`/api/auth/ProjectOrResearch?postId=${postId}`, {
+      const res = await fetch(`/api/auth/ProjectOrResearch?postId=${postToDelete}`, {
         method: 'DELETE',
       });
       if (res.ok) {
-        setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+        setPosts(prevPosts => prevPosts.filter(post => post.id !== postToDelete));
+        setToast({ message: 'Post deleted successfully', type: 'success' });
+      } else {
+        throw new Error('Failed to delete');
       }
     } catch (error) {
       console.error("Failed to delete post", error);
+      setToast({ message: 'Failed to delete post', type: 'error' });
+    } finally {
+      setIsDeleteModalOpen(false);
+      setPostToDelete(null);
     }
   };
 
@@ -922,6 +963,11 @@ const LinkedInProfilePage = () => {
             initialData={{ headline: profile.headline, location: profile.location, mobile: profile.user.mobile }} 
             onSave={handleSaveProfile}
           />
+          <DeleteConfirmationModal
+            isOpen={isDeleteModalOpen}
+            onClose={() => setIsDeleteModalOpen(false)}
+            onConfirm={confirmDelete}
+          />
 
           {/* My Posts Section */}
           <div className="bg-[#2b2b2b] rounded-2xl shadow-lg border border-zinc-700">
@@ -949,19 +995,40 @@ const LinkedInProfilePage = () => {
                         <p className="text-xs text-zinc-500 mt-1">{post.timestamp}</p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      {isOwnProfile && (
-                        <button 
-                          onClick={() => handleDeletePost(post.id)}
-                          className="text-zinc-400 hover:text-red-500 transition-colors"
-                          title="Delete Post"
-                        >
-                          <Trash2 size={20} />
-                        </button>
-                      )}
-                      <button className="text-zinc-400 hover:text-white">
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuPostId(activeMenuPostId === post.id ? null : post.id);
+                        }}
+                        className="text-zinc-400 hover:text-white p-2 hover:bg-zinc-800 rounded-full transition-colors"
+                      >
                         <MoreHorizontal size={20} />
                       </button>
+                      {activeMenuPostId === post.id && (
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1a1a] border border-zinc-700 rounded-xl shadow-xl z-10 overflow-hidden">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/user/${username}/post/${post.id}`);
+                            }}
+                            className="w-full text-left px-4 py-3 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                          >
+                            View Post Detail
+                          </button>
+                          {isOwnProfile && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeletePost(post.id);
+                              }}
+                              className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-zinc-800 hover:text-red-300 transition-colors"
+                            >
+                              Delete Post
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <p className="mt-4 text-zinc-300 whitespace-pre-wrap">{post.content}</p>
@@ -988,13 +1055,13 @@ const LinkedInProfilePage = () => {
                       <span>{post.comments} comments</span>
                   </div>
                   <div className="mt-4 pt-3 border-t border-zinc-700 flex gap-2">
-                    <button onClick={() => handleInteraction(post.id, 'like')} className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-colors w-full justify-center ${post.likes.includes(session?.user?.email) ? 'text-blue-400 bg-blue-500/10' : 'text-zinc-300 hover:bg-zinc-700'}`}>
-                      <ThumbsUp size={20} className={post.likes.includes(session?.user?.email) ? 'fill-current' : ''} /> Like
+                    <button onClick={() => handleInteraction(post.id, 'like')} className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-colors w-full justify-center ${post.likes.includes(session?.user?.username) ? 'text-blue-400 bg-blue-500/10' : 'text-zinc-300 hover:bg-zinc-700'}`}>
+                      <ThumbsUp size={20} className={post.likes.includes(session?.user?.username) ? 'fill-current' : ''} /> Like
                     </button>
-                    <button onClick={() => handleInteraction(post.id, 'interested')} className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-colors w-full justify-center ${post.interested?.includes(session?.user?.email) ? 'text-yellow-400 bg-yellow-500/10' : 'text-zinc-300 hover:bg-zinc-700'}`}>
-                      <Star size={20} className={post.interested?.includes(session?.user?.email) ? 'fill-current' : ''} /> Interested
+                    <button onClick={() => handleInteraction(post.id, 'interested')} className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-colors w-full justify-center ${post.interested?.includes(session?.user?.username) ? 'text-yellow-400 bg-yellow-500/10' : 'text-zinc-300 hover:bg-zinc-700'}`}>
+                      <Star size={20} className={post.interested?.includes(session?.user?.username) ? 'fill-current' : ''} /> Interested
                     </button>
-                    <button className="flex items-center gap-2 text-zinc-300 hover:bg-zinc-700 py-2 px-3 rounded-lg transition-colors w-full justify-center">
+                    <button onClick={() => router.push(`/user/${username}/post/${post.id}?tab=comments`)} className="flex items-center gap-2 text-zinc-300 hover:bg-zinc-700 py-2 px-3 rounded-lg transition-colors w-full justify-center">
                       <MessageSquare size={20} /> Comment
                     </button>
                     <button className="flex items-center gap-2 text-zinc-300 hover:bg-zinc-700 py-2 px-3 rounded-lg transition-colors w-full justify-center">
@@ -1135,6 +1202,15 @@ const LinkedInProfilePage = () => {
           </SidebarCard>
         </div>
       </div>
+      {activeMenuPostId !== null && (
+        <div className="fixed inset-0 z-0" onClick={() => setActiveMenuPostId(null)} />
+      )}
+      {toast && (
+        <div className={`fixed bottom-8 right-8 px-6 py-3 rounded-xl shadow-2xl text-white font-medium transform transition-all duration-300 z-50 flex items-center gap-2 ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+          {toast.type === 'success' ? <ThumbsUp size={18} /> : <X size={18} />}
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 };
