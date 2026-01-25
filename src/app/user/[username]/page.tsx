@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { Briefcase, GraduationCap, MapPin, Plus, Send, Star, Linkedin, Github, Twitter, MoreHorizontal, ThumbsUp, MessageSquare, Share2, Eye, Users, Phone, Pencil, X, Trash2, Award, LogOut, Camera } from 'lucide-react';
 import CreatePostModal from '@/components/CreatePostModal';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 
 const people = [
   { name: 'Jane Smith', headline: 'Lead Designer at Innovate Inc.', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop' },
@@ -554,10 +555,10 @@ const LinkedInProfilePage = () => {
             const formattedPosts = (data.data || []).map((post: any) => ({
               id: post._id,
               author: {
-                name: post.user?.fullName,
-                username: post.user?.username,
-                avatar: post.user?.profileImage,
-                headline: post.user?.headline,
+                name: post.userId?.fullName,
+                username: post.userId?.username,
+                avatar: post.userId?.profileImage,
+                headline: post.userId?.headline,
               },
               timestamp: new Date(post.createdAt).toLocaleDateString(),
               content: post.description,
@@ -643,6 +644,21 @@ const LinkedInProfilePage = () => {
       });
     } catch (error) {
       console.error("Failed to update interaction", error);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+
+    try {
+      const res = await fetch(`/api/auth/ProjectOrResearch?postId=${postId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+      }
+    } catch (error) {
+      console.error("Failed to delete post", error);
     }
   };
 
@@ -915,23 +931,38 @@ const LinkedInProfilePage = () => {
                 <div key={post.id} className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <img
-                        className="w-12 h-12 rounded-full object-cover"
-                        src={post.author.avatar || profile?.profilePicture || profile?.user?.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
-                        alt={`${post.author.name || profile?.user?.fullName || "User"}'s avatar`}
-                      />
+                      <Link href={`/user/${post.author.username || profile?.user?.username}`}>
+                        <img
+                          className="w-12 h-12 rounded-full object-cover cursor-pointer"
+                          src={post.author.avatar || profile?.profilePicture || profile?.user?.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
+                          alt={`${post.author.name || profile?.user?.fullName || "User"}'s avatar`}
+                        />
+                      </Link>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-bold text-white">{post.author.name || profile?.user?.fullName || "Unknown"}</p>
+                          <Link href={`/user/${post.author.username || profile?.user?.username}`} className="hover:underline">
+                            <p className="font-bold text-white">{post.author.name || profile?.user?.fullName || "Unknown"}</p>
+                          </Link>
                           {(post.author.username || profile?.user?.username) && <span className="text-xs text-zinc-500">@{post.author.username || profile?.user?.username}</span>}
                         </div>
                         <p className="text-sm text-zinc-400">{post.author.headline || profile?.headline}</p>
                         <p className="text-xs text-zinc-500 mt-1">{post.timestamp}</p>
                       </div>
                     </div>
-                    <button className="text-zinc-400 hover:text-white">
-                      <MoreHorizontal size={20} />
-                    </button>
+                    <div className="flex gap-2">
+                      {isOwnProfile && (
+                        <button 
+                          onClick={() => handleDeletePost(post.id)}
+                          className="text-zinc-400 hover:text-red-500 transition-colors"
+                          title="Delete Post"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      )}
+                      <button className="text-zinc-400 hover:text-white">
+                        <MoreHorizontal size={20} />
+                      </button>
+                    </div>
                   </div>
                   <p className="mt-4 text-zinc-300 whitespace-pre-wrap">{post.content}</p>
                   {post.coverImage && (
