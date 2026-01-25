@@ -164,7 +164,7 @@ export async function GET(req: Request) {
                 type: 'project',
                 content: p.topic + (p.description ? "\n\n" + p.description : ""),
                 image: p.coverImage,
-                comments: p.comments || [] // Projects don't have comments in the current model
+                // comments is already present in projects from the DB
             }))
         ];
 
