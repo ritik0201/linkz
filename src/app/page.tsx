@@ -23,6 +23,7 @@ interface FeedItem {
     fullName: string;
     username: string;
     profileImage?: string;
+    profilePicture?: string;
   };
   likes: string[];
   interested?: string[];
@@ -32,6 +33,7 @@ interface FeedItem {
       fullName: string;
       username: string;
       profileImage?: string;
+      profilePicture?: string;
     };
     text: string;
     createdAt: string;
@@ -43,6 +45,7 @@ export default function Home() {
   const { data: session, status } = useSession();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
   const [usersMap, setUsersMap] = useState<Record<string, any>>({});
@@ -66,7 +69,13 @@ export default function Home() {
   const fetchFeed = async () => {
     try {
       const res = await fetch("/api/posts");
+      if (!res.ok) {
+        throw new Error(`Failed to fetch feed: ${res.status}`);
+      }
       const data = await res.json();
+      if (data.currentUserProfile) {
+        setCurrentUserProfile(data.currentUserProfile);
+      }
       if (data.data) {
         const posts = data.data;
         const map: Record<string, any> = {};
@@ -184,6 +193,13 @@ export default function Home() {
 
   // Logged In View
   if (session) {
+    const displayUser = currentUserProfile ? {
+      ...session.user,
+      ...currentUserProfile,
+      image: currentUserProfile.profilePicture || currentUserProfile.profileImage || (session.user as any).image,
+      name: currentUserProfile.fullName || (session.user as any).name,
+    } : session.user;
+
     return (
       <main className="min-h-screen bg-black">
         <Navbar />
@@ -191,7 +207,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Left Sidebar - User Profile */}
             <div className="hidden lg:block lg:col-span-3 sticky top-24 self-start">
-              <FeedProfileCard user={session.user} />
+              <FeedProfileCard user={displayUser} />
             </div>
 
             {/* Main Feed */}
@@ -200,7 +216,7 @@ export default function Home() {
               <div className="bg-[#2b2b2b] p-4 rounded-2xl shadow-lg border border-zinc-700/50 flex items-center gap-4">
                 <img 
                   // @ts-ignore
-                  src={session.user.image || session.user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"} 
+                  src={displayUser.image || displayUser.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"} 
                   alt="Profile" 
                   className="w-12 h-12 rounded-full object-cover"
                 />
@@ -229,6 +245,7 @@ export default function Home() {
                         ...item,
                         description: item.content, // Map content to description for PosterCard
                         coverImage: item.image,    // Map image to coverImage for PosterCard
+                        commentsCount: item.comments?.length || 0,
                     }}
                     commentText={commentTexts[item._id] || ""}
                     setCommentText={(text) => setCommentTexts(prev => ({ ...prev, [item._id]: text }))}
@@ -256,13 +273,13 @@ export default function Home() {
             onSubmit={handleModalSubmit}
             user={{
               // @ts-ignore
-              _id: session.user._id || session.user.id,
+              _id: displayUser._id || (session.user as any)._id || (session.user as any).id,
               // @ts-ignore
-              name: session.user.fullName || session.user.name,
+              name: displayUser.fullName || displayUser.name || (session.user as any).name,
               // @ts-ignore
-              avatar: session.user.image || session.user.profileImage,
+              avatar: displayUser.profilePicture || displayUser.profileImage || displayUser.image,
               // @ts-ignore
-              headline: session.user.role || "User"
+              headline: displayUser.headline || (session.user as any).role || "User"
             }}
           />
         )}
@@ -368,7 +385,7 @@ const FeedProfileCard = ({ user }: { user: any }) => (
       <div className="absolute -top-10 left-1/2 -translate-x-1/2">
         <img
           className="w-20 h-20 rounded-full border-4 border-[#2b2b2b] object-cover"
-          src={user.image || user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
+          src={user.image || user.profilePicture || user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
           alt={user.name}
         />
       </div>
@@ -377,14 +394,18 @@ const FeedProfileCard = ({ user }: { user: any }) => (
         <p className="text-zinc-400 text-sm mt-1">@{user.username}</p>
         <p className="text-zinc-300 text-sm mt-3 line-clamp-2">{user.headline || "No headline yet."}</p>
       </div>
-      <div className="mt-6 pt-4 border-t border-zinc-700/50 flex justify-between text-sm">
+      <div className="mt-6 pt-4 border-t border-zinc-700/50 flex justify-around text-sm">
         <div className="text-center">
           <p className="text-zinc-400">Views</p>
           <p className="text-white font-bold">1.2k</p>
         </div>
         <div className="text-center">
+          <p className="text-zinc-400">Connections</p>
+          <p className="text-white font-bold">{user.connectionsCount ?? 0}</p>
+        </div>
+        <div className="text-center">
           <p className="text-zinc-400">Projects</p>
-          <p className="text-white font-bold">8</p>
+          <p className="text-white font-bold">{user.projectsCount ?? 0}</p>
         </div>
       </div>
       <Link href={`/user/${user.username}`} className="mt-6 block w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors text-sm font-medium">

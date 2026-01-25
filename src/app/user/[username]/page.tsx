@@ -564,7 +564,12 @@ const LinkedInProfilePage = () => {
         try {
           const res = await fetch(`/api/profile?userid=${username}`);
           if (!res.ok) {
-            const errorData = await res.json();
+            let errorData: any = {};
+            try {
+              errorData = await res.json();
+            } catch (e) {
+              // Ignore JSON parse error for error responses
+            }
             throw new Error(errorData.message || 'Failed to fetch profile');
           }
           const { data } = await res.json();
