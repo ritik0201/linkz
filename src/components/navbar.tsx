@@ -63,7 +63,7 @@ const Navbar = () => {
                         {session ? (
                             <>
                                 <Link
-                                    href="/dashboard"
+                                    href={(session.user as any).role === 'startup' ? "/startup/dashboard" : "/dashboard"}
                                     className="flex items-center gap-2 px-4 py-2 text-zinc-600 dark:text-zinc-400 font-medium hover:text-indigo-600 transition-colors"
                                 >
                                     <LayoutDashboard size={18} />
