@@ -29,6 +29,8 @@ interface ProfileData {
   bio?: string;
   location?: string;
   profilePicture?: string;
+  followers: string[];
+  following: string[];
   links: { title: string; url: string }[];
   skills: string[];
   certificates: {
@@ -548,6 +550,9 @@ const LinkedInProfilePage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | number | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   useEffect(() => {
     if (toast) {
@@ -574,6 +579,14 @@ const LinkedInProfilePage = () => {
           }
           const { data } = await res.json();
           setProfile(data);
+          if (data && session?.user) {
+            // @ts-ignore
+            const currentUserId = session.user._id;
+            // The API needs to return followers as an array of IDs
+            setIsFollowing(data.followers?.includes(currentUserId));
+            setFollowersCount(data.followers?.length || 0);
+            setFollowingCount(data.following?.length || 0);
+          }
         } catch (err: any) {
           setError(err.message);
         } finally {
@@ -611,7 +624,7 @@ const LinkedInProfilePage = () => {
       fetchProfile();
       fetchPosts();
     }
-  }, [username]);
+  }, [username, session]);
 
   const handleCreatePost = (content: string) => {
     if (!content.trim() || !profile) return;
@@ -705,6 +718,37 @@ const LinkedInProfilePage = () => {
     } finally {
       setIsDeleteModalOpen(false);
       setPostToDelete(null);
+    }
+  };
+
+  const handleFollow = async () => {
+    if (!profile || !session?.user) return;
+
+    const originalIsFollowing = isFollowing;
+    const originalFollowersCount = followersCount;
+
+    // Optimistic UI update
+    setIsFollowing(!originalIsFollowing);
+    setFollowersCount(prev => !originalIsFollowing ? prev + 1 : prev - 1);
+
+    try {
+      const res = await fetch('/api/profile/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId: profile.user._id }),
+      });
+
+      if (!res.ok) {
+        // Revert on error
+        setIsFollowing(originalIsFollowing);
+        setFollowersCount(originalFollowersCount);
+        alert('Failed to update follow status.');
+      }
+    } catch (error) {
+      console.error("Failed to follow/unfollow user", error);
+      setIsFollowing(originalIsFollowing);
+      setFollowersCount(originalFollowersCount);
+      alert("An error occurred.");
     }
   };
 
@@ -916,10 +960,18 @@ const LinkedInProfilePage = () => {
 
                 {/* Action Buttons */}
                 <div className="mt-4 flex gap-3">
-                  {!isOwnProfile && (
+                  {isOwnProfile ? (
+                    <button
+                      onClick={() => setIsIntroModalOpen(true)}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-colors"
+                    >
+                      <Pencil size={18} /> Edit Profile
+                    </button>
+                  ) : (
                     <>
-                      <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-colors">
-                        <Plus size={18} /> Connect
+                      <button onClick={handleFollow} className={`font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-colors ${isFollowing ? 'bg-zinc-700 hover:bg-zinc-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}>
+                        {isFollowing ? <Users size={18} /> : <Plus size={18} />}
+                        {isFollowing ? 'Following' : 'Follow'}
                       </button>
                       <button className="bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-colors">
                         <Send size={16} /> Message

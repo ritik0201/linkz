@@ -4,8 +4,9 @@ import Post from "@/models/Post";
 import User from "@/models/User";
 import cloudinary from "@/lib/cloudinary";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // Assuming authOptions is exported from your NextAuth config
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import Profile from "@/models/Profile";
+import ProjectOrResearch from "@/models/projectOrResearch";
 
 // Helper to upload to Cloudinary
 async function uploadToCloudinary(file: File): Promise<string> {
@@ -62,7 +63,6 @@ export async function POST(req: Request) {
     }
 }
 
-import ProjectOrResearch from "@/models/projectOrResearch";
 
 export async function GET(req: Request) {
     try {
@@ -72,19 +72,28 @@ export async function GET(req: Request) {
         let currentUserProfile = null;
 
         if (session?.user) {
-            // Assuming session.user has the user's ID, which should be configured in your NextAuth callbacks
+            // @ts-ignore
             const userId = (session.user as any)._id;
             if (userId) {
                 const user = await User.findById(userId).select("fullName username profileImage").lean();
-                const profile = await Profile.findOne({ user: userId }).select("profilePicture headline").lean();
+                const profile = await Profile.findOne({ user: userId }).select("profilePicture headline followers following location links experience").lean();
                 const projectsCount = await ProjectOrResearch.countDocuments({ userId: userId });
+
+                const latestExperience = profile?.experience
+                    ?.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+                    .find(e => e.current) || profile?.experience?.[0];
+
                 currentUserProfile = {
                     ...user,
                     profileImage: user?.profileImage,
                     profilePicture: profile?.profilePicture,
                     headline: profile?.headline,
-                    connectionsCount: 0,
+                    followersCount: profile?.followers?.length || 0,
+                    followingCount: profile?.following?.length || 0,
                     projectsCount: projectsCount,
+                    location: profile?.location,
+                    links: profile?.links,
+                    latestExperience: latestExperience,
                 };
             }
         }
@@ -155,7 +164,7 @@ export async function GET(req: Request) {
                 type: 'project',
                 content: p.topic + (p.description ? "\n\n" + p.description : ""),
                 image: p.coverImage,
-                comments: [] // Projects don't have comments in the current model
+                comments: p.comments || [] // Projects don't have comments in the current model
             }))
         ];
 

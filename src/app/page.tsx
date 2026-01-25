@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, Rocket, Users, Target, Shield, Loader2, PlusCircle, MapPin, Briefcase } from "lucide-react";
+import { ArrowRight, Rocket, Users, Target, Shield, Loader2, PlusCircle, MapPin, Briefcase, Linkedin, Github, Twitter } from "lucide-react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import CreatePostModal from "@/components/CreatePostModal";
@@ -49,12 +49,16 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
   const [usersMap, setUsersMap] = useState<Record<string, any>>({});
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true);
 
   useEffect(() => {
     if (status === "authenticated") {
       fetchFeed();
+      fetchSuggestions();
     } else if (status === "unauthenticated") {
       setLoading(false);
+      setSuggestionsLoading(false);
     }
   }, [status]);
 
@@ -96,6 +100,21 @@ export default function Home() {
       console.error("Failed to fetch feed:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSuggestions = async () => {
+    setSuggestionsLoading(true);
+    try {
+        const res = await fetch('/api/users/suggestions');
+        if (res.ok) {
+            const data = await res.json();
+            setSuggestions(data.data);
+        }
+    } catch (error) {
+        console.error("Failed to fetch suggestions:", error);
+    } finally {
+        setSuggestionsLoading(false);
     }
   };
 
@@ -206,8 +225,9 @@ export default function Home() {
         <div className="container mx-auto pt-24 pb-12 px-4 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Left Sidebar - User Profile */}
-            <div className="hidden lg:block lg:col-span-3 sticky top-24 self-start">
+            <div className="hidden lg:block lg:col-span-3 sticky top-24 self-start space-y-6">
               <FeedProfileCard user={displayUser} />
+              <QuickInfoCard user={displayUser} />
             </div>
 
             {/* Main Feed */}
@@ -246,6 +266,7 @@ export default function Home() {
                         description: item.content, // Map content to description for PosterCard
                         coverImage: item.image,    // Map image to coverImage for PosterCard
                         commentsCount: item.comments?.length || 0,
+                        comments: item.comments?.slice(-1) || [],
                     }}
                     commentText={commentTexts[item._id] || ""}
                     setCommentText={(text) => setCommentTexts(prev => ({ ...prev, [item._id]: text }))}
@@ -261,7 +282,7 @@ export default function Home() {
 
             {/* Right Sidebar - Suggestions */}
             <div className="hidden lg:block lg:col-span-3 sticky top-24 self-start">
-              <SuggestionsCard />
+              <SuggestionsCard suggestions={suggestions} loading={suggestionsLoading} onFollow={fetchSuggestions} />
             </div>
           </div>
         </div>
@@ -378,6 +399,49 @@ const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode; titl
   </div>
 );
 
+const QuickInfoCard = ({ user }: { user: any }) => {
+  if (!user) return null;
+
+  const socialLinks: { [key: string]: string | undefined } = {};
+  if (user.links) {
+      for (const link of user.links) {
+          const title = link.title.toLowerCase();
+          if (['linkedin', 'github', 'twitter'].includes(title)) {
+              socialLinks[title] = link.url;
+          }
+      }
+  }
+
+  const hasInfo = user.location || user.latestExperience || Object.keys(socialLinks).length > 0;
+  if (!hasInfo) return null;
+
+  return (
+    <div className="bg-[#2b2b2b] p-5 rounded-2xl shadow-lg border border-zinc-700/50">
+      <div className="space-y-4">
+        {user.location && (
+          <div className="flex items-center gap-3 text-sm">
+            <MapPin size={16} className="text-zinc-400 shrink-0" />
+            <span className="text-zinc-300 truncate">{user.location}</span>
+          </div>
+        )}
+        {user.latestExperience && (
+          <div className="flex items-center gap-3 text-sm">
+            <Briefcase size={16} className="text-zinc-400 shrink-0" />
+            <span className="text-zinc-300 truncate">{user.latestExperience.title} at {user.latestExperience.company}</span>
+          </div>
+        )}
+        {Object.keys(socialLinks).length > 0 && (
+          <div className="flex items-center gap-4 pt-3 border-t border-zinc-700/50">
+            {socialLinks.linkedin && <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-[#0077b5] transition-colors"><Linkedin size={20} /></a>}
+            {socialLinks.github && <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white transition-colors"><Github size={20} /></a>}
+            {socialLinks.twitter && <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-[#1DA1F2] transition-colors"><Twitter size={20} /></a>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const FeedProfileCard = ({ user }: { user: any }) => (
   <div className="bg-[#2b2b2b] rounded-2xl overflow-hidden shadow-lg border border-zinc-700/50">
     <div className="h-20 bg-linear-to-r from-indigo-600 to-violet-600"></div>
@@ -396,12 +460,12 @@ const FeedProfileCard = ({ user }: { user: any }) => (
       </div>
       <div className="mt-6 pt-4 border-t border-zinc-700/50 flex justify-around text-sm">
         <div className="text-center">
-          <p className="text-zinc-400">Views</p>
-          <p className="text-white font-bold">1.2k</p>
+          <p className="text-zinc-400">Followers</p>
+          <p className="text-white font-bold">{user.followersCount ?? 0}</p>
         </div>
         <div className="text-center">
-          <p className="text-zinc-400">Connections</p>
-          <p className="text-white font-bold">{user.connectionsCount ?? 0}</p>
+          <p className="text-zinc-400">Following</p>
+          <p className="text-white font-bold">{user.followingCount ?? 0}</p>
         </div>
         <div className="text-center">
           <p className="text-zinc-400">Projects</p>
@@ -415,20 +479,81 @@ const FeedProfileCard = ({ user }: { user: any }) => (
   </div>
 );
 
-const SuggestionsCard = () => (
+const SuggestionItem = ({ user, onFollow }: { user: any, onFollow: () => void }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleFollow = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/profile/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId: user._id }),
+      });
+      if (res.ok) {
+        // Successfully followed, trigger a refetch of suggestions
+        onFollow();
+      } else {
+        console.error("Failed to follow user");
+      }
+    } catch (error) {
+      console.error("Error following user:", error);
+    }
+    // No need to set loading to false, as the component will be removed on successful follow
+  };
+
+  return (
+    <div className="flex items-center gap-3">
+      <Link href={`/user/${user.username}`}>
+        <img
+          className="w-10 h-10 rounded-full object-cover"
+          src={user.profilePicture || user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
+          alt={user.fullName}
+        />
+      </Link>
+      <div className="flex-1 min-w-0">
+        <Link href={`/user/${user.username}`} className="hover:underline">
+          <p className="font-bold text-white text-sm truncate">{user.fullName}</p>
+        </Link>
+        <p className="text-xs text-zinc-400 truncate">{user.headline || 'New to CollabX'}</p>
+      </div>
+      <button
+        onClick={handleFollow}
+        disabled={isLoading}
+        className="text-sm font-bold rounded-full px-3 py-1 transition-colors flex items-center gap-1 text-indigo-400 border border-indigo-400 hover:bg-indigo-900/50 disabled:opacity-50"
+      >
+        {isLoading ? <Loader2 size={14} className="animate-spin" /> : <PlusCircle size={14} />}
+        {isLoading ? '' : 'Follow'}
+      </button>
+    </div>
+  );
+};
+
+const SuggestionsCard = ({ suggestions, loading, onFollow }: { suggestions: any[], loading: boolean, onFollow: () => void }) => (
   <div className="bg-[#2b2b2b] p-5 rounded-2xl shadow-lg border border-zinc-700/50">
     <h3 className="text-lg font-bold text-white mb-4">Suggested for you</h3>
     <div className="space-y-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-zinc-700 animate-pulse"></div>
-          <div className="flex-1 space-y-2">
-            <div className="h-3 bg-zinc-700 rounded w-3/4 animate-pulse"></div>
-            <div className="h-2 bg-zinc-700 rounded w-1/2 animate-pulse"></div>
+      {loading ? (
+        [1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="flex items-center gap-3 animate-pulse">
+            <div className="w-10 h-10 rounded-full bg-zinc-700"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-3 bg-zinc-700 rounded w-3/4"></div>
+              <div className="h-2 bg-zinc-700 rounded w-1/2"></div>
+            </div>
           </div>
-        </div>
-      ))}
+        ))
+      ) : suggestions.length > 0 ? (
+        suggestions.map((user) => <SuggestionItem key={user._id} user={user} onFollow={onFollow} />)
+      ) : (
+        <p className="text-sm text-zinc-500 text-center py-4">No new suggestions.</p>
+      )}
     </div>
-    <button className="mt-4 w-full text-indigo-400 text-sm font-medium hover:underline">View all suggestions</button>
+    <button 
+      onClick={onFollow}
+      className="mt-6 w-full py-2 text-indigo-400 text-sm font-medium hover:text-indigo-300 hover:bg-indigo-500/10 rounded-lg transition-colors"
+    >
+      View more suggestions
+    </button>
   </div>
 );
