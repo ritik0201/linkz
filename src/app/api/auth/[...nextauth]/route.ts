@@ -1,10 +1,10 @@
-import NextAuth from "next-auth";
+import NextAuth, { AuthOptions, User as NextAuthUser } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
-const handler = NextAuth({
+export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -13,7 +13,7 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" },
         otp: { label: "OTP", type: "text" },
       },
-      async authorize(credentials: any) {
+      async authorize(credentials: Record<string, string> | undefined) {
         await dbConnect();
 
         if (!credentials?.email) {
@@ -46,7 +46,7 @@ const handler = NextAuth({
           user.otpExpires = undefined;
           await user.save();
 
-          return user;
+          return user as unknown as NextAuthUser;
         }
 
         // Password Login Flow
@@ -64,7 +64,7 @@ const handler = NextAuth({
           throw new Error("Invalid password");
         }
 
-        return user;
+        return user as unknown as NextAuthUser;
       },
     }),
   ],
@@ -74,6 +74,9 @@ const handler = NextAuth({
         token._id = user._id;
         token.role = user.role;
         token.fullName = user.fullName;
+        token.email = user.email;
+        token.username = user.username;
+        token.mobile = user.mobile;
       }
       return token;
     },
@@ -82,6 +85,9 @@ const handler = NextAuth({
         session.user._id = token._id;
         session.user.role = token.role;
         session.user.fullName = token.fullName;
+        session.user.email = token.email;
+        session.user.username = token.username;
+        session.user.mobile = token.mobile;
       }
       return session;
     },
@@ -93,6 +99,8 @@ const handler = NextAuth({
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

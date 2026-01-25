@@ -11,10 +11,11 @@ declare module 'next-auth' {
    */
   interface Session {
     user: {
-      id: string;
+      _id: string;
       role: string;
       isVerified: boolean;
       fullName: string;
+      username: string;
       mobile?: string;
     } & DefaultSession['user'];
   }
@@ -23,9 +24,11 @@ declare module 'next-auth' {
    * Extends the default User interface.
    */
   interface User extends DefaultUser {
+    _id: string;
     role: string;
     isVerified: boolean;
     fullName: string;
+    username: string;
     mobile?: string;
   }
 }
@@ -35,10 +38,11 @@ declare module 'next-auth' {
  */
 declare module 'next-auth/jwt' {
   interface JWT {
-    id: string;
+    _id: string;
     role: string;
     isVerified: boolean;
     fullName: string;
+    username: string;
     mobile?: string;
   }
 }

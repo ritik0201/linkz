@@ -65,7 +65,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-3">
       {/* Header */}
       <div>
         <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
@@ -77,7 +77,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -109,14 +109,14 @@ export default function Dashboard() {
 
       {/* Recent Activity Section */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
-        <div className="px-6 py-5 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="px-4 py-4 border-b border-zinc-200 dark:border-zinc-800">
           <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Recent Activity
           </h3>
         </div>
         <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
           {recentActivity.map((activity, index) => (
-            <div key={index} className="px-6 py-4 flex items-center gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+            <div key={index} className="px-4 py-4 flex items-center gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
               <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-sm">
                 {activity.initials}
               </div>
