@@ -213,7 +213,7 @@ export default function PostDetailPage() {
                 <Link href={`/user/${author.username}`}>
                   <img
                     className="w-16 h-16 rounded-full object-cover cursor-pointer ring-2 ring-indigo-500/20 hover:ring-indigo-500/40 transition-all"
-                    src={authorProfile?.profilePicture || author.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
+                    src={authorProfile?.profilePicture || author.profileImage || "/user.png"}
                     alt={authorProfile?.user?.fullName || author.fullName}
                   />
                 </Link>

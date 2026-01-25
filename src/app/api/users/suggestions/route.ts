@@ -21,34 +21,32 @@ export async function GET(req: Request) {
         const currentUserProfile = await Profile.findOne({ user: currentUserId }).select('following').lean();
         const followingIds = currentUserProfile ? currentUserProfile.following : [];
 
-        const suggestions = await User.aggregate([
+        const suggestions = await Profile.aggregate([
             {
                 $match: {
-                    _id: { $nin: [...followingIds, currentUserId] }
+                    user: { $nin: [...followingIds, currentUserId] }
                 }
             },
-            { $sample: { size: 5 } }, // Fetch 5 random users
+            { $sample: { size: 1 } }, // Fetch 1 random user
             {
                 $lookup: {
-                    from: 'profiles',
-                    localField: '_id',
-                    foreignField: 'user',
-                    as: 'profileInfo'
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    as: 'userInfo'
                 }
             },
             {
-                $unwind: {
-                    path: '$profileInfo',
-                    preserveNullAndEmptyArrays: true
-                }
+                $unwind: '$userInfo'
             },
             {
                 $project: {
-                    fullName: 1,
-                    username: 1,
-                    profileImage: 1,
-                    profilePicture: '$profileInfo.profilePicture',
-                    headline: '$profileInfo.headline'
+                    _id: '$userInfo._id',
+                    fullName: '$userInfo.fullName',
+                    username: '$userInfo.username',
+                    profileImage: '$userInfo.profileImage',
+                    profilePicture: '$profilePicture',
+                    headline: '$headline'
                 }
             }
         ]);

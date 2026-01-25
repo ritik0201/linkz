@@ -31,7 +31,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "You cannot follow yourself" }, { status: 400 });
         }
 
-        const currentUserProfile = await Profile.findOne({ user: currentUserId });
+        let currentUserProfile = await Profile.findOne({ user: currentUserId });
         const targetUserProfile = await Profile.findOne({ user: targetUserId });
 
         if (!targetUserProfile) {
@@ -39,7 +39,22 @@ export async function POST(req: Request) {
         }
 
         if (!currentUserProfile) {
-            return NextResponse.json({ error: "Current user profile not found" }, { status: 404 });
+            // Create a default profile for the current user if it doesn't exist
+            try {
+                currentUserProfile = await Profile.create({
+                    user: currentUserId,
+                    links: [],
+                    skills: [],
+                    certificates: [],
+                    education: [],
+                    experience: [],
+                    followers: [],
+                    following: []
+                });
+            } catch (createError) {
+                console.error("Failed to create default profile for follower:", createError);
+                return NextResponse.json({ error: "Current user profile not found and could not be created" }, { status: 500 });
+            }
         }
 
         // Check if already following (convert ObjectId to string for comparison)

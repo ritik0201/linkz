@@ -63,7 +63,7 @@ const ProfileSidebarCard = ({ profile }: { profile: ProfileData }) => (
       <div className="absolute -top-10 left-1/2 -translate-x-1/2">
         <img
           className="w-20 h-20 rounded-full border-4 border-[#2b2b2b] object-cover"
-          src={profile.profilePicture || profile.user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
+          src={profile.profilePicture || profile.user.profileImage || "/user.png"}
           alt="Profile Picture"
         />
       </div>
@@ -73,12 +73,12 @@ const ProfileSidebarCard = ({ profile }: { profile: ProfileData }) => (
       </div>
       <div className="mt-4 pt-4 border-t border-zinc-700/50 text-left space-y-1">
         <div className="flex justify-between items-center text-sm text-zinc-400 hover:bg-zinc-800/50 px-2 py-1.5 rounded-md transition-colors cursor-pointer">
-          <span className="font-semibold">Profile views</span>
-          <span className="text-indigo-400 font-bold">432</span>
+          <span className="font-semibold">Followers</span>
+          <span className="text-indigo-400 font-bold">{profile.followers?.length || 0}</span>
         </div>
         <div className="flex justify-between items-center text-sm text-zinc-400 hover:bg-zinc-800/50 px-2 py-1.5 rounded-md transition-colors cursor-pointer">
-          <span className="font-semibold">Post impressions</span>
-          <span className="text-indigo-400 font-bold">1,205</span>
+          <span className="font-semibold">Following</span>
+          <span className="text-indigo-400 font-bold">{profile.following?.length || 0}</span>
         </div>
       </div>
     </div>
@@ -634,7 +634,7 @@ const LinkedInProfilePage = () => {
       author: {
         name: profile.user.fullName,
         username: profile.user.username,
-        avatar: profile.profilePicture || profile.user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop",
+        avatar: profile.profilePicture || profile.user.profileImage || "/user.png",
         headline: profile.headline || "",
       },
       timestamp: "Just now",
@@ -742,13 +742,14 @@ const LinkedInProfilePage = () => {
         // Revert on error
         setIsFollowing(originalIsFollowing);
         setFollowersCount(originalFollowersCount);
-        alert('Failed to update follow status.');
+        const errorData = await res.json();
+        setToast({ message: errorData.error || 'Failed to update follow status.', type: 'error' });
       }
     } catch (error) {
       console.error("Failed to follow/unfollow user", error);
       setIsFollowing(originalIsFollowing);
       setFollowersCount(originalFollowersCount);
-      alert("An error occurred.");
+      setToast({ message: "An error occurred while updating follow status.", type: 'error' });
     }
   };
 
@@ -830,7 +831,7 @@ const LinkedInProfilePage = () => {
   const isOwnProfile = session?.user?.email === user.email;
 
   return (
-    <div className="bg-[#1a1a1a] min-h-screen text-white font-sans">
+    <div className="bg-[#1a1a1a] min-h-screen text-white font-sans pt-16">
       <div className="container mx-auto grid max-w-7xl grid-cols-12 gap-6 px-4 py-8">
         {/* Left Sidebar */}
         <div className="hidden lg:col-span-3 lg:block space-y-6 self-start sticky top-8">
@@ -858,7 +859,7 @@ const LinkedInProfilePage = () => {
               <div className="absolute -top-20 left-6 group">
                 <img
                   className="w-36 h-36 rounded-full border-4 border-[#2b2b2b] object-cover"
-                  src={profilePicture || user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
+                  src={profilePicture || user.profileImage || "/user.png"}
                   alt="Profile Picture"
                 />
                 {isOwnProfile && (
@@ -989,7 +990,7 @@ const LinkedInProfilePage = () => {
               <div className="flex items-start gap-4">
                 <img
                   className="w-12 h-12 rounded-full object-cover"
-                  src={profilePicture || user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
+                  src={profilePicture || user.profileImage || "user.png"}
                   alt="Your Profile Picture"
                 />
                 <button
@@ -1009,7 +1010,7 @@ const LinkedInProfilePage = () => {
             user={{
               _id: user._id,
               name: profile.user.fullName,
-              avatar: profilePicture || user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop",
+              avatar: profilePicture || user.profileImage || "user.png",
               headline: headline || "",
             }}
           />
@@ -1037,7 +1038,7 @@ const LinkedInProfilePage = () => {
                       <Link href={`/user/${post.author.username || profile?.user?.username}`}>
                         <img
                           className="w-12 h-12 rounded-full object-cover cursor-pointer"
-                          src={post.author.avatar || profile?.profilePicture || profile?.user?.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
+                          src={post.author.avatar || profile?.profilePicture || profile?.user?.profileImage || "user.png"}
                           alt={`${post.author.name || profile?.user?.fullName || "User"}'s avatar`}
                         />
                       </Link>
