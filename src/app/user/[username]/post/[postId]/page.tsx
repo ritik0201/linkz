@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ThumbsUp, Star, ArrowLeft, Users, Check, Briefcase, MessageSquare, Send } from 'lucide-react';
+import { ThumbsUp, Star, ArrowLeft, Users, Check, Briefcase, MessageSquare, Send, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
@@ -19,6 +19,8 @@ export default function PostDetailPage() {
   const [isOwner, setIsOwner] = useState(false);
   const [usersMap, setUsersMap] = useState<Record<string, any>>({});
   const [authorProfile, setAuthorProfile] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     if (postId) {
@@ -42,7 +44,10 @@ export default function PostDetailPage() {
   useEffect(() => {
     if (params.username) {
       fetch(`/api/profile?userid=${params.username}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch profile');
+          return res.json();
+        })
         .then(data => {
           if (data.success && data.data) {
             setAuthorProfile(data.data);
@@ -70,7 +75,10 @@ export default function PostDetailPage() {
           method: 'POST',
           body: JSON.stringify({ usernames: uniqueUsernames }),
         })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch users');
+          return res.json();
+        })
         .then(data => {
           if (data.users) {
             const map: Record<string, any> = {};
@@ -131,6 +139,39 @@ export default function PostDetailPage() {
       }
     } catch (error) {
       console.error("Error posting comment:", error);
+    }
+  };
+
+  const handleDeleteClick = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/auth/ProjectOrResearch?postId=${postId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        router.push(`/user/${params.username}`);
+      } else {
+        let errorMessage = 'Unknown error';
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          console.error("Failed to parse error response", e);
+        }
+        alert(`Failed to delete post: ${errorMessage}`);
+        setIsDeleting(false);
+        setIsDeleteModalOpen(false);
+      }
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      alert('An error occurred while deleting the post.');
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
     }
   };
 
@@ -280,10 +321,20 @@ export default function PostDetailPage() {
           {/* Main Content */}
           <div className="lg:col-span-8">
             <div className="bg-[#2b2b2b] rounded-2xl p-8 border border-zinc-700/50 shadow-lg">
-              {/* Post Title */}
-              <h1 className="text-3xl md:text-4xl font-bold mb-6 leading-tight bg-linear-to-r from-white to-zinc-300 bg-clip-text text-transparent">
-                {post.topic}
-              </h1>
+              <div className="flex justify-between items-start mb-6">
+                <h1 className="text-3xl md:text-4xl font-bold leading-tight bg-linear-to-r from-white to-zinc-300 bg-clip-text text-transparent">
+                  {post.topic}
+                </h1>
+                {isOwner && (
+                  <button
+                    onClick={handleDeleteClick}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors border border-red-600/30"
+                  >
+                    <Trash2 size={16} />
+                    Delete
+                  </button>
+                )}
+              </div>
 
               {/* Post Content */}
               <div className="mb-8">
@@ -354,6 +405,13 @@ export default function PostDetailPage() {
           </div>
         </div>
       </div>
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
@@ -386,6 +444,26 @@ const UserListItem = ({ user, userDetails, onApprove }: { user: string, userDeta
           <Check size={16} /> Approve
         </button>
       )}
+    </div>
+  );
+};
+
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, isDeleting }: { isOpen: boolean; onClose: () => void; onConfirm: () => void; isDeleting: boolean }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+      <div className="bg-[#2b2b2b] rounded-2xl w-full max-w-md border border-zinc-700 shadow-2xl p-6">
+        <h3 className="text-xl font-bold text-white mb-2">Delete Post?</h3>
+        <p className="text-zinc-400 mb-6">Are you sure you want to delete this post? This action cannot be undone.</p>
+        <div className="flex justify-end gap-3">
+          <button onClick={onClose} disabled={isDeleting} className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors disabled:opacity-50">Cancel</button>
+          <button onClick={onConfirm} disabled={isDeleting} className="px-4 py-2 rounded-full font-medium bg-red-600 text-white hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50">
+            {isDeleting && <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>}
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
