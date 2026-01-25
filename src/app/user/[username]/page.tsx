@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { Briefcase, GraduationCap, MapPin, Plus, Send, Star, Linkedin, Github, Twitter, MoreHorizontal, ThumbsUp, MessageSquare, Share2, Eye, Users, Phone, Pencil, X, Trash2, Award, LogOut } from 'lucide-react';
+import { Briefcase, GraduationCap, MapPin, Plus, Send, Star, Linkedin, Github, Twitter, MoreHorizontal, ThumbsUp, MessageSquare, Share2, Eye, Users, Phone, Pencil, X, Trash2, Award, LogOut, Camera } from 'lucide-react';
 import CreatePostModal from '@/components/CreatePostModal';
 import { useParams } from 'next/navigation';
 
@@ -551,6 +551,7 @@ const LinkedInProfilePage = () => {
   const [isEducationModalOpen, setIsEducationModalOpen] = useState(false);
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
   const [isCertificatesModalOpen, setIsCertificatesModalOpen] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (username) {
@@ -635,6 +636,22 @@ const LinkedInProfilePage = () => {
     }
   };
 
+  const handleProfilePictureClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        handleSaveProfile({ profilePicture: base64String });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-[#1a1a1a] min-h-screen text-white flex justify-center items-center">
@@ -679,6 +696,14 @@ const LinkedInProfilePage = () => {
         <div className="hidden lg:col-span-3 lg:block space-y-6 self-start sticky top-8">
           <ProfileSidebarCard profile={profile} />
           <GroupsSidebarCard />
+          {isOwnProfile && (
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="w-full bg-[#2b2b2b] hover:bg-red-600 text-white font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg border border-zinc-700"
+            >
+              <LogOut size={20} /> Logout
+            </button>
+          )}
         </div>
 
         {/* Main Content */}
@@ -690,12 +715,23 @@ const LinkedInProfilePage = () => {
 
             <div className="p-6 relative">
               {/* Profile Picture */}
-              <div className="absolute -top-20 left-6">
+              <div className="absolute -top-20 left-6 group">
                 <img
                   className="w-36 h-36 rounded-full border-4 border-[#2b2b2b] object-cover"
                   src={profilePicture || user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
                   alt="Profile Picture"
                 />
+                {isOwnProfile && (
+                  <>
+                    <button
+                      onClick={handleProfilePictureClick}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      <Camera size={24} className="text-white" />
+                    </button>
+                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                  </>
+                )}
               </div>
 
               <div className="pt-16">
@@ -784,14 +820,7 @@ const LinkedInProfilePage = () => {
 
                 {/* Action Buttons */}
                 <div className="mt-4 flex gap-3">
-                  {isOwnProfile ? (
-                    <button
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                      className="bg-zinc-700 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-colors"
-                    >
-                      <LogOut size={18} /> Logout
-                    </button>
-                  ) : (
+                  {!isOwnProfile && (
                     <>
                       <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-colors">
                         <Plus size={18} /> Connect
@@ -807,21 +836,23 @@ const LinkedInProfilePage = () => {
           </div>
 
           {/* Create Post Section */}
-          <div className="bg-[#2b2b2b] p-4 rounded-2xl shadow-lg border border-zinc-700">
-            <div className="flex items-start gap-4">
-              <img
-                className="w-12 h-12 rounded-full object-cover"
-                src={profilePicture || user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
-                alt="Your Profile Picture"
-              />
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="flex-1 text-left bg-transparent border border-zinc-600 hover:bg-zinc-800 rounded-full px-5 py-3 text-zinc-400 font-medium transition-colors"
-              >
-                Share a Project or Research...
-              </button>
+          {isOwnProfile && (
+            <div className="bg-[#2b2b2b] p-4 rounded-2xl shadow-lg border border-zinc-700">
+              <div className="flex items-start gap-4">
+                <img
+                  className="w-12 h-12 rounded-full object-cover"
+                  src={profilePicture || user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
+                  alt="Your Profile Picture"
+                />
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex-1 text-left bg-transparent border border-zinc-600 hover:bg-zinc-800 rounded-full px-5 py-3 text-zinc-400 font-medium transition-colors"
+                >
+                  Share a Project or Research...
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <CreatePostModal
             isOpen={isModalOpen}
@@ -844,7 +875,7 @@ const LinkedInProfilePage = () => {
 
           {/* My Posts Section */}
           <div className="bg-[#2b2b2b] rounded-2xl shadow-lg border border-zinc-700">
-            <h2 className="text-2xl font-bold p-6 pb-4">My Posts</h2>
+            <h2 className="text-2xl font-bold p-6 pb-4">Projects & Researches</h2>
             <div className="divide-y divide-zinc-700/50">
               {posts.map((post) => (
                 <div key={post.id} className="p-6">
