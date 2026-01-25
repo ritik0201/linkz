@@ -129,19 +129,36 @@ export async function POST(req: Request) {
     
     // Extract mobile to update User model
     // Also extract user and _id to prevent updating them in Profile
-    const { mobile, user, _id, ...profileUpdates } = body;
+    const { mobile, user, _id, username, ...profileUpdates } = body;
 
     // 1. Update User model (for mobile)
+    let dbUser;
     if (mobile !== undefined) {
-      await User.findByIdAndUpdate(userId, { mobile });
+      dbUser = await User.findByIdAndUpdate(userId, { mobile }, { new: true }).select("username");
+    } else {
+      dbUser = await User.findById(userId).select("username");
+    }
+
+    if (!dbUser) {
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    if (!dbUser.username) {
+      return NextResponse.json(
+        { success: false, message: "User has no username" },
+        { status: 400 }
+      );
     }
 
     // 2. Update Profile model
     // Use $set with the remaining body fields to perform a partial update
     const updatedProfile = await Profile.findOneAndUpdate(
       { user: userId },
-      { $set: profileUpdates },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
+      { $set: { ...profileUpdates, username: dbUser.username } },
+      { new: true, upsert: true, setDefaultsOnInsert: true, strict: false }
     ).populate({
       path: "user",
       model: User,
