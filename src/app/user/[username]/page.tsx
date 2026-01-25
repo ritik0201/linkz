@@ -6,33 +6,6 @@ import { Briefcase, GraduationCap, MapPin, Plus, Send, Star, Linkedin, Github, T
 import CreatePostModal from '@/components/CreatePostModal';
 import { useParams } from 'next/navigation';
 
-const initialMyPosts = [
-  {
-    id: 2,
-    author: {
-      name: "Alex Doe",
-      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop",
-      headline: "Senior Frontend Developer at ColabX",
-    },
-    timestamp: "2h ago",
-    content: "Excited to share that I've been working on a new open-source project that helps developers collaborate more effectively. It's built with Next.js, TypeScript, and Tailwind CSS. Check it out and let me know what you think! #opensource #development #collaboration",
-    likes: 128,
-    comments: 15,
-  },
-  {
-    id: 1,
-    author: {
-      name: "Alex Doe",
-      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop",
-      headline: "Senior Frontend Developer at ColabX",
-    },
-    timestamp: "1d ago",
-    content: "Just published a new blog post on advanced React patterns. Diving deep into custom hooks, render props, and context API. Hope you find it useful! Link in the comments. #react #frontend #webdev",
-    likes: 256,
-    comments: 42,
-  },
-];
-
 const people = [
   { name: 'Jane Smith', headline: 'Lead Designer at Innovate Inc.', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop' },
   { name: 'John Appleseed', headline: 'Backend Developer at TechGiant', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1887&auto=format&fit=crop' },
@@ -543,7 +516,7 @@ const LinkedInProfilePage = () => {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [posts, setPosts] = useState(initialMyPosts);
+  const [posts, setPosts] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isIntroModalOpen, setIsIntroModalOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
@@ -572,7 +545,36 @@ const LinkedInProfilePage = () => {
           setLoading(false);
         }
       };
+
+      const fetchPosts = async () => {
+        try {
+          const res = await fetch(`/api/auth/ProjectOrResearch?userid=${username}`);
+          if (res.ok) {
+            const data = await res.json();
+            const formattedPosts = (data.data || []).map((post: any) => ({
+              id: post._id,
+              author: {
+                name: post.user?.fullName,
+                username: post.user?.username,
+                avatar: post.user?.profileImage,
+                headline: post.user?.headline,
+              },
+              timestamp: new Date(post.createdAt).toLocaleDateString(),
+              content: post.description,
+              coverImage: post.coverImage,
+              likes: post.likes || [],
+              interested: post.interested || [],
+              comments: post.comments?.length || 0,
+            }));
+            setPosts(formattedPosts);
+          }
+        } catch (err) {
+          console.error("Failed to fetch posts", err);
+        }
+      };
+
       fetchProfile();
+      fetchPosts();
     }
   }, [username]);
 
@@ -583,6 +585,7 @@ const LinkedInProfilePage = () => {
       id: Date.now(),
       author: {
         name: profile.user.fullName,
+        username: profile.user.username,
         avatar: profile.profilePicture || profile.user.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop",
         headline: profile.headline || "",
       },
@@ -610,6 +613,37 @@ const LinkedInProfilePage = () => {
     // TODO: Re-fetch projects or update state here to show the new project
     alert('Project created successfully!');
     // You might want to trigger a refresh of the projects list here.
+  };
+
+  const handleInteraction = async (postId: string, action: 'like' | 'interested') => {
+    if (!session?.user?.email) return;
+    const userIdentifier = session.user.email;
+
+    setPosts(prevPosts => prevPosts.map(post => {
+      if (post.id === postId) {
+        const list = action === 'like' ? post.likes : (post.interested || []);
+        const isActive = list.includes(userIdentifier);
+        const newList = isActive 
+          ? list.filter((u: string) => u !== userIdentifier)
+          : [...list, userIdentifier];
+        
+        return {
+          ...post,
+          [action === 'like' ? 'likes' : 'interested']: newList
+        };
+      }
+      return post;
+    }));
+
+    try {
+      await fetch('/api/auth/ProjectOrResearch', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId, action, username: userIdentifier }),
+      });
+    } catch (error) {
+      console.error("Failed to update interaction", error);
+    }
   };
 
   const handleSaveProfile = async (sectionUpdates: any) => {
@@ -883,12 +917,15 @@ const LinkedInProfilePage = () => {
                     <div className="flex items-start gap-3">
                       <img
                         className="w-12 h-12 rounded-full object-cover"
-                        src={post.author.avatar}
-                        alt={`${post.author.name}'s avatar`}
+                        src={post.author.avatar || profile?.profilePicture || profile?.user?.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop"}
+                        alt={`${post.author.name || profile?.user?.fullName || "User"}'s avatar`}
                       />
                       <div>
-                        <p className="font-bold text-white">{post.author.name}</p>
-                        <p className="text-sm text-zinc-400">{post.author.headline}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-white">{post.author.name || profile?.user?.fullName || "Unknown"}</p>
+                          {(post.author.username || profile?.user?.username) && <span className="text-xs text-zinc-500">@{post.author.username || profile?.user?.username}</span>}
+                        </div>
+                        <p className="text-sm text-zinc-400">{post.author.headline || profile?.headline}</p>
                         <p className="text-xs text-zinc-500 mt-1">{post.timestamp}</p>
                       </div>
                     </div>
@@ -897,16 +934,34 @@ const LinkedInProfilePage = () => {
                     </button>
                   </div>
                   <p className="mt-4 text-zinc-300 whitespace-pre-wrap">{post.content}</p>
+                  {post.coverImage && (
+                    <div className="mt-4 rounded-xl overflow-hidden border border-zinc-700">
+                      <img
+                        src={post.coverImage}
+                        alt="Post content"
+                        className="w-full h-auto object-cover max-h-[500px]"
+                      />
+                    </div>
+                  )}
                   <div className="mt-4 flex items-center justify-between text-zinc-400 text-sm">
                       <div className="flex items-center gap-1.5">
                           <ThumbsUp size={14} className="text-green-500" />
-                          <span>{post.likes}</span>
+                          <span>{post.likes.length}</span>
                       </div>
+                      {post.interested && post.interested.length > 0 && (
+                        <div className="flex items-center gap-1.5">
+                            <Star size={14} className="text-yellow-500" />
+                            <span>{post.interested.length} interested</span>
+                        </div>
+                      )}
                       <span>{post.comments} comments</span>
                   </div>
                   <div className="mt-4 pt-3 border-t border-zinc-700 flex gap-2">
-                    <button className="flex items-center gap-2 text-zinc-300 hover:bg-zinc-700 py-2 px-3 rounded-lg transition-colors w-full justify-center">
-                      <ThumbsUp size={20} /> Like
+                    <button onClick={() => handleInteraction(post.id, 'like')} className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-colors w-full justify-center ${post.likes.includes(session?.user?.email) ? 'text-blue-400 bg-blue-500/10' : 'text-zinc-300 hover:bg-zinc-700'}`}>
+                      <ThumbsUp size={20} className={post.likes.includes(session?.user?.email) ? 'fill-current' : ''} /> Like
+                    </button>
+                    <button onClick={() => handleInteraction(post.id, 'interested')} className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-colors w-full justify-center ${post.interested?.includes(session?.user?.email) ? 'text-yellow-400 bg-yellow-500/10' : 'text-zinc-300 hover:bg-zinc-700'}`}>
+                      <Star size={20} className={post.interested?.includes(session?.user?.email) ? 'fill-current' : ''} /> Interested
                     </button>
                     <button className="flex items-center gap-2 text-zinc-300 hover:bg-zinc-700 py-2 px-3 rounded-lg transition-colors w-full justify-center">
                       <MessageSquare size={20} /> Comment
