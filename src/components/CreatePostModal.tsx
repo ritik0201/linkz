@@ -68,8 +68,8 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit, user }: CreatePostModalPro
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-[#1b1f23] w-full max-w-2xl rounded-3xl shadow-2xl border border-zinc-700 overflow-hidden relative flex flex-col max-h-[95vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-0 md:p-4 animate-in fade-in duration-200">
+      <div className="bg-[#1b1f23] w-full max-w-2xl rounded-none md:rounded-3xl shadow-2xl border border-zinc-700 overflow-hidden relative flex flex-col h-full md:h-auto md:max-h-[95vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-700">
           <h2 className="text-xl font-bold text-white">Share a Project or Research</h2>

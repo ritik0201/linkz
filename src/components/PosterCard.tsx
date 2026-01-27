@@ -62,6 +62,30 @@ export default function PosterCard({ post, commentText, setCommentText, handleCo
   const isInterested = post.interested?.includes(currentUser?.username) || post.interested?.includes(currentUser?._id);
   const isOwner = currentUser?.username === authorUsername || currentUser?._id === authorInfo._id;
 
+  const handleShare = async () => {
+    const postId = post._id || post.id;
+    const isStartup = authorInfo.role === 'startup';
+    const url = `${window.location.origin}${isStartup ? `/startup/${postId}` : `/user/post/${postId}`}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.topic || 'Check out this post',
+          text: post.description || post.content,
+          url: url,
+        });
+      } catch (err) {
+        console.error("Error sharing:", err);
+      }
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        alert("Link copied to clipboard!");
+      }).catch((err) => {
+        console.error("Failed to copy link:", err);
+      });
+    }
+  };
+
   return (
     <div className="bg-[#2b2b2b] rounded-2xl p-6 border border-zinc-700/50 shadow-lg mb-6">
       {/* Header */}
@@ -168,24 +192,27 @@ export default function PosterCard({ post, commentText, setCommentText, handleCo
       <div className="pt-2 border-t border-zinc-700/50 flex gap-1 mb-4">
         <button 
             onClick={onLike}
-            className={`flex-1 flex items-center gap-2 py-2 px-3 rounded-lg transition-colors justify-center font-medium text-sm ${isLiked ? 'text-blue-400 bg-blue-500/10' : 'text-zinc-300 hover:bg-zinc-800'}`}
+            className={`flex-1 flex items-center gap-1.5 md:gap-2 py-1.5 md:py-2 px-2 md:px-3 rounded-lg transition-colors justify-center font-medium text-xs md:text-sm ${isLiked ? 'text-blue-400 bg-blue-500/10' : 'text-zinc-300 hover:bg-zinc-800'}`}
         >
-          <ThumbsUp size={18} className={isLiked ? 'fill-current' : ''} /> Like
+          <ThumbsUp className={`w-3.5 h-3.5 md:w-[18px] md:h-[18px] ${isLiked ? 'fill-current' : ''}`} /> Like
         </button>
         <button 
             onClick={onInterested}
-            className={`flex-1 flex items-center gap-2 py-2 px-3 rounded-lg transition-colors justify-center font-medium text-sm ${isInterested ? 'text-yellow-400 bg-yellow-500/10' : 'text-zinc-300 hover:bg-zinc-800'}`}
+            className={`flex-1 flex items-center gap-1.5 md:gap-2 py-1.5 md:py-2 px-2 md:px-3 rounded-lg transition-colors justify-center font-medium text-xs md:text-sm ${isInterested ? 'text-yellow-400 bg-yellow-500/10' : 'text-zinc-300 hover:bg-zinc-800'}`}
         >
-          <Star size={18} className={isInterested ? 'fill-current' : ''} /> Interested
+          <Star className={`w-3.5 h-3.5 md:w-[18px] md:h-[18px] ${isInterested ? 'fill-current' : ''}`} /> Interested
         </button>
         <button 
             onClick={() => document.getElementById(`comment-input-${post._id || post.id}`)?.focus()}
-            className="flex-1 flex items-center gap-2 py-2 px-3 rounded-lg transition-colors justify-center text-zinc-300 hover:bg-zinc-800 font-medium text-sm"
+            className="flex-1 flex items-center gap-1.5 md:gap-2 py-1.5 md:py-2 px-2 md:px-3 rounded-lg transition-colors justify-center text-zinc-300 hover:bg-zinc-800 font-medium text-xs md:text-sm"
         >
-          <MessageSquare size={18} /> Comment
+          <MessageSquare className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /> Comment
         </button>
-        <button className="flex-1 flex items-center gap-2 py-2 px-3 rounded-lg transition-colors justify-center text-zinc-300 hover:bg-zinc-800 font-medium text-sm">
-          <Share2 size={18} /> Share
+        <button 
+          onClick={handleShare}
+          className="flex-1 flex items-center gap-1.5 md:gap-2 py-1.5 md:py-2 px-2 md:px-3 rounded-lg transition-colors justify-center text-zinc-300 hover:bg-zinc-800 font-medium text-xs md:text-sm"
+        >
+          <Share2 className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /> Share
         </button>
       </div>
 

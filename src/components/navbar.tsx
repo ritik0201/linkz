@@ -18,6 +18,13 @@ const Navbar = () => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
+    const searchRef = useRef<HTMLDivElement>(null);
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [showResults, setShowResults] = useState(false);
+    const [placeholder, setPlaceholder] = useState("");
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [loopNum, setLoopNum] = useState(0);
+    const [userAvatar, setUserAvatar] = useState("");
 
     useEffect(() => {
         const handleScroll = () => {
@@ -29,6 +36,9 @@ const Navbar = () => {
             if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
                 setIsProfileOpen(false);
             }
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setShowResults(false);
+            }
         };
         document.addEventListener("mousedown", handleClickOutside);
 
@@ -37,6 +47,70 @@ const Navbar = () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
+
+    useEffect(() => {
+        const words = ["Search users...", "Find projects...", "Discover research..."];
+        const i = loopNum % words.length;
+        const fullText = words[i];
+
+        let speed = isDeleting ? 50 : 150;
+
+        if (!isDeleting && placeholder === fullText) {
+            speed = 2000;
+        } else if (isDeleting && placeholder === "") {
+            speed = 500;
+        }
+
+        const timer = setTimeout(() => {
+            if (!isDeleting && placeholder === fullText) {
+                setIsDeleting(true);
+            } else if (isDeleting && placeholder === "") {
+                setIsDeleting(false);
+                setLoopNum((prev) => prev + 1);
+            } else {
+                setPlaceholder((prev) => (isDeleting ? prev.slice(0, -1) : fullText.slice(0, prev.length + 1)));
+            }
+        }, speed);
+
+        return () => clearTimeout(timer);
+    }, [placeholder, isDeleting, loopNum]);
+
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(async () => {
+            if (searchQuery.trim()) {
+                try {
+                    const res = await fetch(`/api/search?q=${searchQuery}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setSearchResults(data.data || []);
+                    }
+                } catch (error) {
+                    console.error("Search error:", error);
+                }
+            } else {
+                setSearchResults([]);
+            }
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery]);
+
+    useEffect(() => {
+        if (session?.user) {
+            // @ts-ignore
+            const username = session.user.username;
+            if (username) {
+                fetch(`/api/profile?userid=${username}`)
+                    .then((res) => res.json())
+                    .then((data) => {
+                        if (data.data) {
+                            setUserAvatar(data.data.profilePicture || data.data.user?.profileImage || data.data.user?.image);
+                        }
+                    })
+                    .catch((err) => console.error("Failed to fetch user avatar", err));
+            }
+        }
+    }, [session]);
 
     const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter" && searchQuery.trim()) {
@@ -69,18 +143,64 @@ const Navbar = () => {
                     <div className="flex items-center gap-2 md:gap-6 flex-1 justify-end">
                         
                         {/* Search Bar */}
-                        <div className="relative hidden md:block w-full max-w-md mx-4">
+                        <div className="relative hidden md:block w-full max-w-md mx-4" ref={searchRef}>
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Search size={16} className="text-zinc-400" />
                             </div>
                             <input
                                 type="text"
                                 className="block w-full pl-10 pr-3 py-2 border border-zinc-700 rounded-full leading-5 bg-zinc-900/50 text-zinc-300 placeholder-zinc-500 focus:outline-none focus:bg-zinc-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 sm:text-sm transition-colors"
-                                placeholder="Search users..."
+                                placeholder={placeholder}
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setShowResults(true);
+                                }}
+                                onFocus={() => setShowResults(true)}
                                 onKeyDown={handleSearch}
                             />
+                            <AnimatePresence>
+                                {showResults && searchQuery.trim().length > 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 10 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-zinc-700 rounded-xl shadow-2xl overflow-hidden z-50"
+                                    >
+                                        {searchResults.length > 0 ? (
+                                            <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                                                {searchResults.map((user) => (
+                                                    <Link
+                                                        key={user._id}
+                                                        href={`/user/${user.username}`}
+                                                        className="flex items-center gap-3 p-3 hover:bg-zinc-800 transition-colors border-b border-zinc-800 last:border-0"
+                                                        onClick={() => {
+                                                            setShowResults(false);
+                                                            setSearchQuery("");
+                                                        }}
+                                                    >
+                                                        <img 
+                                                            src={user.profileImage || user.profilePicture || user.image || user.avatar || "/user.png"} 
+                                                            alt={user.fullName} 
+                                                            className="w-8 h-8 rounded-full object-cover" 
+                                                        />
+                                                        <div>
+                                                            <p className="text-white text-sm font-bold truncate">{user.fullName}</p>
+                                                            <p className="text-zinc-400 text-xs truncate">@{user.username}</p>
+                                                            {user.headline && <p className="text-zinc-500 text-xs mt-1 truncate">{user.headline}</p>}
+                                                        </div>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="p-4 text-center text-zinc-500 text-sm">
+                                                No results found.
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
                         {/* Navigation Icons */}
@@ -112,7 +232,7 @@ const Navbar = () => {
                                 >
                                     <img
                                         className="h-9 w-9 rounded-full object-cover border-2 border-transparent hover:border-indigo-500 transition-colors"
-                                        src={(session.user as any).image || (session.user as any).profileImage || "/user.png"}
+                                        src={userAvatar || (session.user as any).image || (session.user as any).profileImage || "/user.png"}
                                         alt="User Profile"
                                     />
                                 </button>
@@ -130,7 +250,7 @@ const Navbar = () => {
                                                 <div className="flex items-center gap-3 mb-3">
                                                     <img
                                                         className="h-12 w-12 rounded-full object-cover"
-                                                        src={(session.user as any).image || (session.user as any).profileImage || "/user.png"}
+                                                        src={userAvatar || (session.user as any).image || (session.user as any).profileImage || "/user.png"}
                                                         alt="User"
                                                     />
                                                     <div className="overflow-hidden">
@@ -215,11 +335,43 @@ const Navbar = () => {
                                 <input
                                     type="text"
                                     className="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-10 pr-4 py-2 text-white text-sm focus:outline-none focus:border-indigo-500"
-                                    placeholder="Search users..."
+                                    placeholder={placeholder}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyDown={handleSearch}
                                 />
+                                {searchQuery.trim().length > 0 && (
+                                    <div className="mt-2 bg-zinc-900 border border-zinc-700 rounded-lg overflow-hidden">
+                                         {searchResults.length > 0 ? (
+                                            searchResults.map((user) => (
+                                                <Link
+                                                    key={user._id}
+                                                    href={`/user/${user.username}`}
+                                                    className="flex items-center gap-3 p-3 hover:bg-zinc-800 transition-colors border-b border-zinc-800 last:border-0"
+                                                    onClick={() => {
+                                                        setIsMobileMenuOpen(false);
+                                                        setSearchQuery("");
+                                                    }}
+                                                >
+                                                    <img 
+                                                        src={user.profileImage || user.profilePicture || user.image || user.avatar || "/user.png"} 
+                                                        alt={user.fullName} 
+                                                        className="w-8 h-8 rounded-full object-cover" 
+                                                    />
+                                                    <div>
+                                                        <p className="text-white text-sm font-bold truncate">{user.fullName}</p>
+                                                        <p className="text-zinc-400 text-xs truncate">@{user.username}</p>
+                                                        {user.headline && <p className="text-zinc-500 text-xs mt-1 truncate">{user.headline}</p>}
+                                                    </div>
+                                                </Link>
+                                            ))
+                                        ) : (
+                                            <div className="p-3 text-center text-zinc-500 text-xs">
+                                                No results found.
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                             <div className="grid grid-cols-4 gap-2">
                                 <Link href="/" className="flex flex-col items-center gap-1 p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg" onClick={() => setIsMobileMenuOpen(false)}>
