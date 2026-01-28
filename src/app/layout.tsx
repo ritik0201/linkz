@@ -5,8 +5,8 @@ import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
 
 export const metadata: Metadata = {
-  title: "Linkz",
-  description: "Linkz Application",
+  title: "Collab Bharat",
+  description: "Collab Bharat",
 };
 
 export default function RootLayout({

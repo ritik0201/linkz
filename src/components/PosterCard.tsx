@@ -55,7 +55,7 @@ export default function PosterCard({ post, commentText, setCommentText, handleCo
   };
   const authorName = authorInfo.fullName || authorInfo.name || "Unknown User";
   const authorUsername = authorInfo.username || "unknown";
-  const authorAvatar = authorInfo.profileImage || authorInfo.profilePicture || authorInfo.avatar || authorInfo.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fDE?q=80&w=1780&auto=format&fit=crop";
+  const authorAvatar = authorInfo.profileImage || authorInfo.profilePicture || authorInfo.avatar || authorInfo.image || "/user.png";
   const authorHeadline = authorInfo.headline || "";
   const timestamp = new Date(post.createdAt || Date.now()).toLocaleDateString();
 
