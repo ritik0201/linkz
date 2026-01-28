@@ -1,0 +1,47 @@
+{
+  "name": "Collab Bharat",
+  "short_name": "Collab",
+  "description": "A professional networking platform to connect, share, and grow with like-minded individuals.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#2b2b2b",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/logo.gif",
+      "sizes": "192x192",
+      "type": "image/gif"
+    },
+    {
+      "src": "/logo.gif",
+      "sizes": "512x512",
+      "type": "image/gif"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Discover your professional feed"
+    },
+    {
+      "src": "/screenshots/screenshot2.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Connect with other professionals"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Create Post",
+      "url": "/?action=create-post",
+      "icons": [{ "src": "/logo.gif", "sizes": "96x96", "type": "image/gif" }]
+    }
+  ],
+  "categories": ["business", "social", "networking"]
+}

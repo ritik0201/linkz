@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Rocket, Twitter, Linkedin, Instagram, Github, Heart } from "lucide-react";
+import { Twitter, Linkedin, Instagram, Github, Heart } from "lucide-react";
 
 const Footer = () => {
     return (
@@ -12,9 +12,7 @@ const Footer = () => {
                     {/* Brand Column */}
                     <div className="space-y-4">
                         <Link href="/" className="flex items-center gap-2 group">
-                            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
-                                <Rocket size={20} />
-                            </div>
+                            <img src="/logo.gif" alt="Linkz Logo" className="w-8 h-8 rounded-lg shadow-lg group-hover:scale-110 transition-transform" />
                             <span className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">
                                 Linkz
                             </span>

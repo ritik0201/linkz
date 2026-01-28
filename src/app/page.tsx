@@ -1,13 +1,33 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Rocket, Users, Target, Shield, Loader2, PlusCircle, MapPin, Briefcase, Hash, Calendar, Info } from "lucide-react";
 import Navbar from "@/components/navbar";
-import Footer from "@/components/footer";
+// import Footer from "@/components/footer";
 import CreatePostModal from "@/components/CreatePostModal";
 import { useSession } from "next-auth/react";
 import PosterCard from "@/components/PosterCard";
+
+// --- START: Type Definitions ---
+interface UserSummary {
+  _id: string;
+  fullName: string;
+  username: string;
+  profileImage?: string;
+  profilePicture?: string;
+  headline?: string;
+  image?: string; // from session
+  avatar?: string; // from session
+}
+
+interface Comment {
+  userId: UserSummary;
+  text: string;
+  createdAt: string;
+  username?: string; // Dynamically added for PosterCard
+}
 
 interface FeedItem {
   _id: string;
@@ -18,84 +38,149 @@ interface FeedItem {
   category?: string;
   teamMembers?: string[];
   link?: string;
-  userId: {
-    _id: string;
-    fullName: string;
-    username: string;
-    profileImage?: string;
-    profilePicture?: string;
-  };
+  userId: UserSummary;
   likes: string[];
   interested?: string[];
-  comments: {
-    userId: {
-      _id: string;
-      fullName: string;
-      username: string;
-      profileImage?: string;
-      profilePicture?: string;
-    };
-    text: string;
-    createdAt: string;
-  }[];
+  comments: Comment[];
   createdAt: string;
 }
+
+interface CurrentUserProfile extends UserSummary {
+  email: string | null;
+  role?: string;
+  mobile?: string;
+  followers?: string[];
+  following?: string[];
+  followersCount?: number;
+  followingCount?: number;
+  projectsCount?: number;
+  skills?: string[];
+  name?: string; // from session
+}
+
+interface SessionUser {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  username?: string;
+  _id?: string;
+}
+
+interface DisplayUser extends Omit<Partial<CurrentUserProfile>, 'image' | 'name'>, Omit<Partial<SessionUser>, 'image' | 'name'> {
+  image?: string | null;
+  name?: string | null;
+}
+// --- END: Type Definitions ---
+
+const PostSkeleton = () => (
+    <div className="bg-[#2b2b2b] p-4 sm:p-6 rounded-2xl shadow-lg border border-zinc-700/50 animate-pulse w-full">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-zinc-700"></div>
+            <div className="space-y-2">
+                <div className="h-4 bg-zinc-700 rounded w-32"></div>
+                <div className="h-3 bg-zinc-700 rounded w-24"></div>
+            </div>
+        </div>
+
+        {/* Content */}
+        <div className="mt-4 space-y-2">
+            <div className="h-4 bg-zinc-700 rounded w-full"></div>
+            <div className="h-4 bg-zinc-700 rounded w-5/6"></div>
+        </div>
+
+        {/* Image */}
+        <div className="mt-4 aspect-video w-full bg-zinc-700 rounded-xl"></div>
+
+        {/* Stats */}
+        <div className="mt-4 flex justify-between items-center">
+            <div className="h-4 bg-zinc-700 rounded w-16"></div>
+            <div className="h-4 bg-zinc-700 rounded w-24"></div>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-2 pt-3 border-t border-zinc-700/50 flex gap-2">
+            <div className="h-9 bg-zinc-700 rounded-lg w-full"></div>
+            <div className="h-9 bg-zinc-700 rounded-lg w-full"></div>
+            <div className="h-9 bg-zinc-700 rounded-lg w-full"></div>
+            <div className="h-9 bg-zinc-700 rounded-lg w-full"></div>
+        </div>
+    </div>
+);
 
 export default function Home() {
   const { data: session, status } = useSession();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfile | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
-  const [usersMap, setUsersMap] = useState<Record<string, any>>({});
+  const [usersMap, setUsersMap] = useState<Record<string, UserSummary>>({});
+
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastPostElementRef = useCallback((node: HTMLElement | null) => {
+    if (loadingMore) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        fetchFeed(page + 1);
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [loadingMore, hasMore, page]);
 
   useEffect(() => {
     if (status === "authenticated") {
-      fetchFeed();
+      fetchFeed(1);
     } else if (status === "unauthenticated") {
       setLoading(false);
     }
   }, [status]);
 
-  const shuffleArray = (array: any[]) => {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  };
+  const fetchFeed = async (pageNum: number) => {
+    if (pageNum === 1) setLoading(true);
+    else setLoadingMore(true);
 
-  const fetchFeed = async () => {
     try {
-      const res = await fetch("/api/posts");
+      const res = await fetch(`/api/posts?page=${pageNum}&limit=5`);
       if (!res.ok) {
         throw new Error(`Failed to fetch feed: ${res.status}`);
       }
       const data = await res.json();
-      if (data.currentUserProfile) {
+      if (pageNum === 1 && data.currentUserProfile) {
         setCurrentUserProfile(data.currentUserProfile);
       }
       if (data.data) {
-        const posts = data.data;
-        const map: Record<string, any> = {};
+        const posts: FeedItem[] = data.data;
+        const map: Record<string, UserSummary> = {};
 
         // Build usersMap and normalize post data for PosterCard
-        posts.forEach((p: any) => {
+        posts.forEach((p: FeedItem) => {
           if (p.userId) map[p.userId.username] = p.userId;
-          p.comments?.forEach((c: any) => {
+          p.comments?.forEach((c: Comment) => {
             if (c.userId) map[c.userId.username] = c.userId;
             c.username = c.userId?.username; // Ensure username exists for PosterCard lookup
           });
         });
 
-        setUsersMap(map);
-        setItems(shuffleArray(posts));
+        setUsersMap(prev => ({ ...prev, ...map }));
+        setItems(prev => {
+          if (pageNum === 1) return posts;
+          const existingIds = new Set(prev.map(item => item._id));
+          const newPosts = posts.filter(item => !existingIds.has(item._id));
+          return [...prev, ...newPosts];
+        });
+        setPage(pageNum);
+        setHasMore(data.pagination.hasMore);
       }
     } catch (error) {
       console.error("Failed to fetch feed:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -107,7 +192,7 @@ export default function Home() {
       });
       const data = await res.json();
       if (data.data) {
-        fetchFeed();
+        fetchFeed(1);
       }
     } catch (error) {
       console.error("Failed to create project:", error);
@@ -117,11 +202,11 @@ export default function Home() {
 
   const handleCommentSubmit = async (e: React.FormEvent, postId: string) => {
     e.preventDefault();
+    const sessionUser = session?.user as SessionUser;
     const text = commentTexts[postId];
-    if (!session?.user || !text?.trim()) return;
+    if (!sessionUser?.username || !text?.trim()) return;
 
-    // @ts-ignore
-    const username = session.user.username;
+    const username = sessionUser.username;
 
     try {
       const res = await fetch("/api/auth/ProjectOrResearch", {
@@ -129,6 +214,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ postId, username, action: "comment", text }),
       });
+      if (!res.ok) throw new Error("Failed to post comment");
       const data = await res.json();
       if (data.data) {
         // Update the specific post in the list
@@ -136,7 +222,7 @@ export default function Home() {
           if (item._id === postId) {
             // Ensure comments have username for PosterCard
             const updatedPost = data.data;
-            updatedPost.comments?.forEach((c: any) => {
+            updatedPost.comments?.forEach((c: Comment) => {
               c.username = c.username || c.userId?.username;
             });
             return { ...item, ...updatedPost };
@@ -151,11 +237,12 @@ export default function Home() {
   };
 
   const handleInteraction = async (postId: string, action: 'like' | 'interested') => {
-    // @ts-ignore
-    if (!session?.user?.username) return;
-    // @ts-ignore
-    const userIdentifier = session.user.username;
+    const sessionUser = session?.user as SessionUser;
+    if (!sessionUser?.username) return;
+    const userIdentifier = sessionUser.username;
 
+    const originalItems = [...items];
+    
     setItems(prevItems => prevItems.map(item => {
       if (item._id === postId) {
         const list = action === 'like' ? item.likes : (item.interested || []);
@@ -173,13 +260,18 @@ export default function Home() {
     }));
 
     try {
-      await fetch('/api/auth/ProjectOrResearch', {
+      const res = await fetch('/api/auth/ProjectOrResearch', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ postId, action, username: userIdentifier }),
       });
+      if (!res.ok) {
+        // Revert on error
+        setItems(originalItems);
+      }
     } catch (error) {
       console.error("Failed to update interaction", error);
+      setItems(originalItems);
     }
   };
 
@@ -193,12 +285,13 @@ export default function Home() {
 
   // Logged In View
   if (session) {
-    const displayUser = currentUserProfile ? {
+    const sessionUser = session.user as SessionUser;
+    const displayUser: DisplayUser = currentUserProfile ? {
       ...session.user,
       ...currentUserProfile,
-      image: currentUserProfile.profilePicture || currentUserProfile.profileImage || (session.user as any).image,
-      name: currentUserProfile.fullName || (session.user as any).name,
-    } : session.user;
+      image: currentUserProfile.profilePicture || currentUserProfile.profileImage || sessionUser.image,
+      name: currentUserProfile.fullName || sessionUser.name,
+    } : sessionUser;
 
     return (
       <main className="min-h-screen bg-black">
@@ -216,8 +309,7 @@ export default function Home() {
               {/* Create Post Button */}
               <div className="bg-[#2b2b2b] p-4 rounded-2xl shadow-lg border border-zinc-700/50 flex items-center gap-4">
                 <img
-                  // @ts-ignore
-                  src={displayUser.image || displayUser.profileImage || "/user.png"}
+                  src={displayUser?.image || displayUser?.profileImage || "/user.png"}
                   alt="Profile"
                   className="w-12 h-12 rounded-full object-cover"
                 />
@@ -230,9 +322,8 @@ export default function Home() {
               </div>
 
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-4">
-                  <Loader2 className="animate-spin text-indigo-600" size={40} />
-                  <p className="text-zinc-500">Loading feed...</p>
+                <div className="space-y-6">
+                  {[...Array(3)].map((_, i) => <PostSkeleton key={i} />)}
                 </div>
               ) : items.length === 0 ? (
                 <div className="text-center py-20 bg-[#2b2b2b] rounded-2xl border border-zinc-700/50">
@@ -258,6 +349,19 @@ export default function Home() {
                   />
                 ))
               )}
+              <div ref={lastPostElementRef} />
+
+              {loadingMore && (
+                <div className="space-y-6 mt-6">
+                  <PostSkeleton />
+                </div>
+              )}
+
+              {!loading && !hasMore && items.length > 0 && (
+                <div className="text-center py-10 text-zinc-500">
+                  <p>You've reached the end!</p>
+                </div>
+              )}
             </div>
 
             {/* Right Sidebar - Suggestions */}
@@ -275,19 +379,14 @@ export default function Home() {
             onClose={() => setIsModalOpen(false)}
             onSubmit={handleModalSubmit}
             user={{
-              // @ts-ignore
-              _id: displayUser._id || (session.user as any)._id || (session.user as any).id,
-              // @ts-ignore
-              name: displayUser.fullName || displayUser.name || (session.user as any).name,
-              // @ts-ignore
-              avatar: displayUser.profilePicture || displayUser.profileImage || displayUser.image,
-              // @ts-ignore
-              headline: displayUser.headline || (session.user as any).role || "User"
+              _id: displayUser?._id || "",
+              name: displayUser?.fullName || displayUser?.name || "",
+              avatar: displayUser?.profilePicture || displayUser?.profileImage || displayUser?.image || "/user.png",
+              headline: displayUser?.headline || displayUser?.role || "User"
             }}
           />
         )}
 
-        <Footer />
         <style jsx global>{`
           .custom-scrollbar::-webkit-scrollbar { width: 4px; }
           .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -347,7 +446,7 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <FeatureCard
-              icon={<Rocket size={32} />}
+              icon={<img src="/logo.gif" alt="Fast Matching" className="w-8 h-8" />}
               title="Fast Matching"
               description="Our AI-driven algorithms connect you with the perfect candidates in hours, not weeks."
             />
@@ -381,100 +480,48 @@ const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode; titl
   </div>
 );
 
-const FeedProfileCard = ({ user }: { user: any }) => (
+const FeedProfileCard = ({ user }: { user: DisplayUser | null }) => (
   <div className="bg-[#2b2b2b] rounded-2xl overflow-hidden shadow-lg border border-zinc-700/50">
     <div className="h-20 bg-linear-to-r from-indigo-600 to-violet-600"></div>
     <div className="p-6 pt-0 text-center">
       <img
         className="w-20 h-20 rounded-full border-4 border-[#2b2b2b] object-cover mx-auto -mt-10 mb-4"
-        src={user.image || user.profilePicture || user.profileImage || "/user.png"}
-        alt={user.name}
+        src={user?.image || user?.profilePicture || user?.profileImage || "/user.png"}
+        alt={user?.name || user?.fullName || "User"}
       />
       <div>
-        <h2 className="text-xl font-bold text-white">{user.name || user.fullName}</h2>
-        <p className="text-zinc-400 text-sm mt-1">@{user.username}</p>
-        <p className="text-zinc-300 text-sm mt-3 line-clamp-2">{user.headline || "No headline yet."}</p>
+        <h2 className="text-xl font-bold text-white">{user?.name || user?.fullName}</h2>
+        <p className="text-zinc-400 text-sm mt-1">@{user?.username}</p>
+        <p className="text-zinc-300 text-sm mt-3 line-clamp-2">{user?.headline || "No headline yet."}</p>
       </div>
       <div className="mt-6 pt-4 border-t border-zinc-700/50 flex justify-around text-sm">
         <div className="text-center">
           <p className="text-zinc-400">Followers</p>
-          <p className="text-white font-bold">{user.followersCount || user.followers?.length || 0}</p>
+          <p className="text-white font-bold">{user?.followersCount ?? 0}</p>
         </div>
         <div className="text-center">
           <p className="text-zinc-400">Following</p>
-          <p className="text-white font-bold">{user.followingCount || user.following?.length || 0}</p>
+          <p className="text-white font-bold">{user?.followingCount ?? 0}</p>
         </div>
         <div className="text-center">
           <p className="text-zinc-400">Projects</p>
-          <p className="text-white font-bold">{user.projectsCount ?? 0}</p>
+          <p className="text-white font-bold">{user?.projectsCount ?? 0}</p>
         </div>
       </div>
-      <Link href={`/user/${user.username}`} className="mt-6 block w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors text-sm font-medium">
+      <Link href={`/user/${user?.username}`} className="mt-6 block w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors text-sm font-medium">
         View Profile
       </Link>
     </div>
   </div>
 );
 
-const SuggestionItem = ({ user, onFollow }: { user: any; onFollow: () => void }) => {
-  const [isFollowing, setIsFollowing] = useState(false);
-
-  const handleFollow = async () => {
-    setIsFollowing(true);
-    try {
-      const res = await fetch("/api/profile/follow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetUserId: user._id }),
-      });
-      if (res.ok) {
-        onFollow();
-      } else {
-        console.error("Failed to follow user");
-        const errorData = await res.json();
-        console.error("Failed to follow user:", errorData.error || res.statusText);
-      }
-    } catch (error) {
-      console.error("Error following user:", error);
-    } finally {
-      setIsFollowing(false);
-    }
-  };
-
-  return (
-    <div className="flex items-center gap-3">
-      <Link href={`/user/${user.username}`}>
-        <img
-          className="w-10 h-10 rounded-full object-cover"
-          src={user.profilePicture || user.profileImage || user.image || user.avatar || "/user.png"}
-          alt={user.fullName}
-        />
-      </Link>
-      <div className="flex-1 min-w-0">
-        <Link href={`/user/${user.username}`} className="hover:underline">
-          <p className="font-bold text-white text-sm truncate">{user.fullName}</p>
-        </Link>
-        <p className="text-xs text-zinc-400 truncate">{user.headline || "New to Linkz"}</p>
-      </div>
-      <button
-        onClick={handleFollow}
-        disabled={isFollowing}
-        className="text-sm font-bold rounded-full px-3 py-1 transition-colors flex items-center gap-1 text-indigo-400 border border-indigo-400 hover:bg-indigo-900/50 disabled:opacity-50"
-      >
-        {isFollowing ? <Loader2 size={14} className="animate-spin" /> : <PlusCircle size={14} />}
-        {isFollowing ? "" : "Follow"}
-      </button>
-    </div>
-  );
-};
-
-const CommunityCard = ({ user }: { user: any }) => (
+const CommunityCard = ({ user }: { user: DisplayUser | null }) => (
   <div className="bg-[#2b2b2b] rounded-2xl overflow-hidden shadow-lg border border-zinc-700/50 mt-4 p-3">
     <div className="space-y-3">
       <div>
         <h3 className="text-xs font-bold text-white mb-2">Your Topics</h3>
         <ul className="space-y-1">
-          {(user?.skills?.length ? user.skills.slice(0, 5) : ["webdevelopment", "react", "javascript"]).map((tag: string, i: number) => (
+          {(user?.skills && user.skills.length > 0 ? user.skills.slice(0, 5) : ["webdevelopment", "react", "javascript"]).map((tag: string, i: number) => (
             <li key={i} className="flex items-center gap-2 text-zinc-400 hover:text-white text-xs cursor-pointer">
               <Hash size={12} /> <span className="truncate">{tag}</span>
             </li>
@@ -540,57 +587,151 @@ const FooterLinks = () => (
       ))}
     </div>
     <div className="mt-4 flex items-center justify-center gap-1 text-xs text-zinc-400">
+      <img src="/logo.gif" alt="Linkz Logo" className="w-5 h-5" />
       <span className="font-bold text-indigo-500">Linkz</span>
       <span>© 2024</span>
     </div>
   </div>
 );
 
-const SuggestionsCard = () => {
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+const SuggestionItem = ({ user, onFollow, isFollowing: initialIsFollowing }: { user: UserSummary; onFollow: () => void; isFollowing: boolean }) => {
+  const { data: session } = useSession();
+  const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-  const fetchSuggestions = async () => {
-    setLoading(true);
+  useEffect(() => {
+    setIsFollowing(initialIsFollowing);
+  }, [initialIsFollowing]);
+
+  const handleFollowToggle = async () => {
+    if (!session) return;
+    setIsLoading(true);
     try {
-      const res = await fetch("/api/users/suggestions");
+      const res = await fetch("/api/profile/follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId: user._id }),
+      });
       if (res.ok) {
-        const data = await res.json();
-        setSuggestions(data.data);
+        onFollow();
+      } else {
+        console.error("Failed to follow/unfollow user");
       }
     } catch (error) {
-      console.error("Failed to fetch suggestions:", error);
+      console.error("Error toggling follow:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex items-start gap-3">
+      <Link href={`/user/${user.username}`}>
+        <img
+          className="w-12 h-12 rounded-full object-cover"
+          src={user.profilePicture || user.profileImage || user.image || user.avatar || "/user.png"}
+          alt={user.fullName}
+        />
+      </Link>
+      <div className="flex-1 min-w-0">
+        <Link href={`/user/${user.username}`} className="hover:underline">
+          <p className="font-bold text-white text-sm truncate">{user.fullName}</p>
+        </Link>
+        <p className="text-xs text-zinc-400 truncate">{user.headline || "New to Linkz"}</p>
+        <div className="flex items-center gap-2 mt-2">
+          <button
+            onClick={handleFollowToggle}
+            disabled={isLoading}
+            className={`flex items-center justify-center gap-1.5 w-24 text-xs font-bold py-1.5 rounded-full transition-colors disabled:opacity-50 ${
+              isFollowing
+                ? 'bg-zinc-700 hover:bg-zinc-600 text-white'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }`}
+          >
+            {isLoading ? <Loader2 size={14} className="animate-spin" /> : (isFollowing ? 'Following' : 'Follow')}
+          </button>
+          <Link href={`/user/${user.username}`} className="flex items-center justify-center w-24 text-xs font-bold py-1.5 rounded-full transition-colors border border-zinc-500 text-zinc-300 hover:bg-zinc-700 hover:border-zinc-400">
+            View Profile
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SuggestionsCard = () => {
+  const { data: session } = useSession();
+  const [suggestions, setSuggestions] = useState<UserSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUserFollowing, setCurrentUserFollowing] = useState<string[]>([]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [suggestionsRes, profileRes] = await Promise.all([
+        fetch("/api/users/suggestions"),
+        session?.user?.username ? fetch(`/api/profile?userid=${session.user.username}`) : Promise.resolve(null)
+      ]);
+
+      if (suggestionsRes.ok) {
+        const suggestionsData = await suggestionsRes.json();
+        const allSuggestions: UserSummary[] = suggestionsData.data || [];
+        const sessionUser = session?.user as SessionUser;
+        // Filter out the current user from the suggestions list
+        const filteredSuggestions = allSuggestions.filter(
+          (u) => u.username !== sessionUser?.username
+        );
+        setSuggestions(filteredSuggestions);
+      }
+
+      if (profileRes && profileRes.ok) {
+        const profileData = await profileRes.json();
+        setCurrentUserFollowing(profileData.data?.following || []);
+      }
+
+    } catch (error) {
+      console.error("Failed to fetch data for suggestions:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSuggestions();
-  }, []);
+    if (session) {
+      fetchData();
+    }
+  }, [session]);
 
   return (
     <div className="bg-[#2b2b2b] p-5 rounded-2xl shadow-lg border border-zinc-700/50">
-      <h3 className="text-lg font-bold text-white mb-4">Suggested for you</h3>
+      <h3 className="text-lg font-bold text-white mb-4">People you may know</h3>
       <div className="space-y-4">
         {loading ? (
-          <div className="flex items-center gap-3 animate-pulse">
-            <div className="w-10 h-10 rounded-full bg-zinc-700"></div>
-            <div className="flex-1 space-y-2">
-              <div className="h-3 bg-zinc-700 rounded w-3/4"></div>
-              <div className="h-2 bg-zinc-700 rounded w-1/2"></div>
+          [...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3 animate-pulse">
+              <div className="w-12 h-12 rounded-full bg-zinc-700"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-3 bg-zinc-700 rounded w-3/4"></div>
+                <div className="h-2 bg-zinc-700 rounded w-1/2"></div>
+              </div>
             </div>
-          </div>
+          ))
         ) : suggestions.length > 0 ? (
           suggestions.map((user) => (
-            <SuggestionItem key={user._id} user={user} onFollow={fetchSuggestions} />
+            <SuggestionItem
+              key={user._id}
+              user={user}
+              onFollow={fetchData}
+              isFollowing={currentUserFollowing.includes(user._id)}
+            />
           ))
         ) : (
           <p className="text-sm text-zinc-500 text-center py-4">No new suggestions.</p>
         )}
       </div>
       <button
-        onClick={fetchSuggestions}
+        onClick={fetchData}
         className="mt-6 w-full py-2 text-indigo-400 text-sm font-medium hover:text-indigo-300 hover:bg-indigo-500/10 rounded-lg transition-colors"
       >
         More suggestions

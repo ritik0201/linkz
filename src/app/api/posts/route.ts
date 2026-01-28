@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Post from "@/models/Post";
 import User from "@/models/User";
@@ -64,14 +64,20 @@ export async function POST(req: Request) {
 }
 
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
     try {
         await dbConnect();
+
+        const searchParams = req.nextUrl.searchParams;
+        const page = parseInt(searchParams.get('page') || '1', 10);
+        const limit = parseInt(searchParams.get('limit') || '5', 10);
+        const skip = (page - 1) * limit;
 
         const session = await getServerSession(authOptions);
         let currentUserProfile = null;
 
-        if (session?.user) {
+        // Only fetch current user profile on the first page load to avoid redundant fetches
+        if (session?.user && page === 1) {
             // @ts-ignore
             const userId = (session.user as any)._id;
             if (userId) {
@@ -98,18 +104,39 @@ export async function GET(req: Request) {
             }
         }
 
-        // Fetch Posts
-        const posts = await Post.find({})
+        // To implement pagination across two collections, we first get sorted IDs
+        const postMetas = await Post.find({}, '_id createdAt').lean();
+        const projectMetas = await ProjectOrResearch.find({}, '_id createdAt').lean();
+
+        const combinedMetas = [
+            ...postMetas.map(p => ({ ...p, type: 'post' })),
+            ...projectMetas.map(p => ({ ...p, type: 'project' }))
+        ];
+
+        // Shuffle combinedMetas for random combination
+        for (let i = combinedMetas.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [combinedMetas[i], combinedMetas[j]] = [combinedMetas[j], combinedMetas[i]];
+        }
+
+        const totalItems = combinedMetas.length;
+        const paginatedMetas = combinedMetas.slice(skip, skip + limit);
+
+        const postIdsToFetch = paginatedMetas.filter(m => m.type === 'post').map(m => m._id);
+        const projectIdsToFetch = paginatedMetas.filter(m => m.type === 'project').map(m => m._id);
+
+        // Fetch full documents for the current page
+        const posts = postIdsToFetch.length > 0 ? await Post.find({ _id: { $in: postIdsToFetch } })
             .populate("userId", "fullName username profileImage")
             .populate("comments.userId", "fullName username profileImage")
-            .lean();
+            .lean() : [];
 
-        // Fetch ProjectOrResearch entries
-        const projects = await ProjectOrResearch.find({})
+        const projects = projectIdsToFetch.length > 0 ? await ProjectOrResearch.find({ _id: { $in: projectIdsToFetch } })
             .populate("userId", "fullName username profileImage")
-            .lean();
+            .lean() : [];
 
         // Collect user IDs and fetch profiles to get profile pictures
+        // This is necessary to get the most up-to-date profile pictures for users in the feed
         const userIds = new Set<string>();
         const collectIds = (items: any[]) => {
             items.forEach(item => {
@@ -168,10 +195,19 @@ export async function GET(req: Request) {
             }))
         ];
 
-        // Sort by newest first
-        combinedFeed.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        // Shuffle combinedFeed to mix posts and projects
+        for (let i = combinedFeed.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [combinedFeed[i], combinedFeed[j]] = [combinedFeed[j], combinedFeed[i]];
+        }
 
-        return NextResponse.json({ data: combinedFeed, currentUserProfile }, { status: 200 });
+        return NextResponse.json({
+            data: combinedFeed,
+            currentUserProfile,
+            pagination: {
+                hasMore: skip + combinedFeed.length < totalItems
+            }
+        }, { status: 200 });
     } catch (error: any) {
         console.error("Error fetching feed:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });

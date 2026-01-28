@@ -2,18 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { Briefcase, GraduationCap, MapPin, Plus, Send, Star, Linkedin, Github, Twitter, MoreHorizontal, ThumbsUp, MessageSquare, Share2, Eye, Users, Phone, Pencil, X, Trash2, Award, LogOut, Camera } from 'lucide-react';
+import { Briefcase, GraduationCap, MapPin, Plus, Send, Star, Linkedin, Github, Twitter, MoreHorizontal, ThumbsUp, MessageSquare, Share2, Eye, Users, Phone, Pencil, X, Trash2, Award, LogOut, Camera, Loader2, PlusCircle } from 'lucide-react';
 import CreatePostModal from '@/components/CreatePostModal';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-const people = [
-  { name: 'Jane Smith', headline: 'Lead Designer at Innovate Inc.', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop' },
-  { name: 'John Appleseed', headline: 'Backend Developer at TechGiant', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1887&auto=format&fit=crop' },
-  { name: 'Emily White', headline: 'Product Manager at Solutions Co.', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1961&auto=format&fit=crop' },
-  { name: 'Michael Brown', headline: 'Data Scientist at DataWorks', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1887&auto=format&fit=crop' },
-  { name: 'Sarah Jones', headline: 'UX Researcher at UserFirst', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1888&auto=format&fit=crop' },
-];
 
 interface ProfileData {
   user: {
@@ -97,18 +89,74 @@ const SidebarCard = ({ title, icon, children }: { title: string, icon?: React.Re
   </div>
 );
 
-const PersonListItem = ({ name, headline, avatar }: { name: string, headline: string, avatar: string }) => (
-  <div className="flex items-start gap-3">
-    <img className="w-12 h-12 rounded-full object-cover" src={avatar} alt={name} />
-    <div>
-      <p className="font-semibold text-white hover:underline cursor-pointer">{name}</p>
-      <p className="text-xs text-zinc-400">{headline}</p>
-      <button className="mt-2 text-sm font-bold text-zinc-400 border border-zinc-500 rounded-full px-3 py-0.5 hover:bg-zinc-700 hover:border-zinc-400 hover:text-white transition-colors flex items-center gap-1">
-        <Plus size={14} /> Connect
-      </button>
+const SuggestionItem = ({ user, onFollow, isFollowing: initialIsFollowing }: { user: any; onFollow: () => void; isFollowing: boolean }) => {
+  const { data: session } = useSession();
+  const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    setIsFollowing(initialIsFollowing);
+  }, [initialIsFollowing]);
+
+  const handleFollowToggle = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/profile/follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId: user._id }),
+      });
+      if (res.ok) {
+        onFollow();
+      } else {
+        console.error("Failed to follow/unfollow user");
+      }
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (session?.user?.username === user.username) {
+    return null;
+  }
+
+  return (
+    <div className="flex items-start gap-3">
+      <Link href={`/user/${user.username}`}>
+        <img
+          className="w-12 h-12 rounded-full object-cover"
+          src={user.profilePicture || user.profileImage || user.image || user.avatar || "/user.png"}
+          alt={user.fullName}
+        />
+      </Link>
+      <div className="flex-1 min-w-0">
+        <Link href={`/user/${user.username}`} className="hover:underline">
+          <p className="font-bold text-white text-sm truncate">{user.fullName}</p>
+        </Link>
+        <p className="text-xs text-zinc-400 truncate">{user.headline || "New to Linkz"}</p>
+        <div className="flex items-center gap-2 mt-2">
+          <button
+            onClick={handleFollowToggle}
+            disabled={isLoading}
+            className={`flex items-center justify-center gap-1.5 w-24 text-xs font-bold py-1.5 rounded-full transition-colors disabled:opacity-50 ${
+              isFollowing
+                ? 'bg-zinc-700 hover:bg-zinc-600 text-white'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }`}
+          >
+            {isLoading ? <Loader2 size={14} className="animate-spin" /> : (isFollowing ? 'Following' : 'Follow')}
+          </button>
+          <Link href={`/user/${user.username}`} className="flex items-center justify-center w-24 text-xs font-bold py-1.5 rounded-full transition-colors border border-zinc-500 text-zinc-300 hover:bg-zinc-700 hover:border-zinc-400">
+            View Profile
+          </Link>
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const GroupListItem = ({ name, members, avatar }: { name: string, members: string, avatar: string }) => (
     <div className="flex items-center gap-3">
@@ -127,6 +175,71 @@ const GroupsSidebarCard = () => (
         <GroupListItem name="TypeScript Enthusiasts" members="95k members" avatar="https://images.unsplash.com/photo-1619410283995-43d9134e7656?q=80&w=2070&auto=format&fit=crop" />
     </SidebarCard>
 );
+
+const SuggestionsSidebarCard = () => {
+  const { data: session } = useSession();
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUserFollowing, setCurrentUserFollowing] = useState<string[]>([]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [suggestionsRes, profileRes] = await Promise.all([
+        fetch("/api/users/suggestions"),
+        session?.user?.username ? fetch(`/api/profile?userid=${session.user.username}`) : Promise.resolve(null)
+      ]);
+
+      if (suggestionsRes.ok) {
+        const suggestionsData = await suggestionsRes.json();
+        setSuggestions(suggestionsData.data || []);
+      }
+
+      if (profileRes && profileRes.ok) {
+        const profileData = await profileRes.json();
+        setCurrentUserFollowing(profileData.data?.following || []);
+      }
+
+    } catch (error) {
+      console.error("Failed to fetch data for suggestions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (session) {
+      fetchData();
+    }
+  }, [session]);
+
+  return (
+    <SidebarCard title="People you may know" icon={<Users size={20} />}>
+      {loading ? (
+        [...Array(3)].map((_, i) => (
+          <div key={i} className="flex items-center gap-3 animate-pulse">
+            <div className="w-12 h-12 rounded-full bg-zinc-700"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-3 bg-zinc-700 rounded w-3/4"></div>
+              <div className="h-2 bg-zinc-700 rounded w-1/2"></div>
+            </div>
+          </div>
+        ))
+      ) : suggestions.length > 0 ? (
+        suggestions.map((user) => (
+          <SuggestionItem
+            key={user._id}
+            user={user}
+            onFollow={fetchData}
+            isFollowing={currentUserFollowing.includes(user._id)}
+          />
+        ))
+      ) : (
+        <p className="text-sm text-zinc-500 text-center py-4">No new suggestions.</p>
+      )}
+    </SidebarCard>
+  );
+};
 
 const EditIntroModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: boolean; onClose: () => void; initialData: any; onSave: (data: any) => void }) => {
   const [formData, setFormData] = useState(initialData);
@@ -553,6 +666,7 @@ const LinkedInProfilePage = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [showAllPosts, setShowAllPosts] = useState(false);
 
   useEffect(() => {
     if (toast) {
@@ -599,7 +713,8 @@ const LinkedInProfilePage = () => {
           const res = await fetch(`/api/auth/ProjectOrResearch?userid=${username}`);
           if (res.ok) {
             const data = await res.json();
-            const formattedPosts = (data.data || []).map((post: any) => ({
+            const sortedPosts = (data.data || []).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            const formattedPosts = sortedPosts.map((post: any) => ({
               id: post._id,
               author: {
                 name: post.userId?.fullName,
@@ -1031,7 +1146,7 @@ const LinkedInProfilePage = () => {
           <div className="bg-[#2b2b2b] rounded-2xl shadow-lg border border-zinc-700">
             <h2 className="text-2xl font-bold p-6 pb-4">Projects & Researches</h2>
             <div className="divide-y divide-zinc-700/50">
-              {posts.map((post) => (
+              {(showAllPosts ? posts : posts.slice(0, 1)).map((post) => (
                 <div key={post.id} className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
@@ -1112,23 +1227,30 @@ const LinkedInProfilePage = () => {
                       )}
                       <span>{post.comments} comments</span>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-zinc-700 flex gap-2">
-                    <button onClick={() => handleInteraction(post.id, 'like')} className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-colors w-full justify-center ${post.likes.includes(session?.user?.username) ? 'text-blue-400 bg-blue-500/10' : 'text-zinc-300 hover:bg-zinc-700'}`}>
-                      <ThumbsUp size={20} className={post.likes.includes(session?.user?.username) ? 'fill-current' : ''} /> Like
+                  <div className="mt-4 pt-3 border-t border-zinc-700 flex gap-1 md:gap-2">
+                    <button onClick={() => handleInteraction(post.id, 'like')} className={`flex items-center gap-1 md:gap-2 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm ${post.likes.includes(session?.user?.username) ? 'text-blue-400 bg-blue-500/10' : 'text-zinc-300 hover:bg-zinc-700'}`}>
+                      <ThumbsUp className={`w-4 h-4 md:w-5 md:h-5 ${post.likes.includes(session?.user?.username) ? 'fill-current' : ''}`} /> Like
                     </button>
-                    <button onClick={() => handleInteraction(post.id, 'interested')} className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-colors w-full justify-center ${post.interested?.includes(session?.user?.username) ? 'text-yellow-400 bg-yellow-500/10' : 'text-zinc-300 hover:bg-zinc-700'}`}>
-                      <Star size={20} className={post.interested?.includes(session?.user?.username) ? 'fill-current' : ''} /> Interested
+                    <button onClick={() => handleInteraction(post.id, 'interested')} className={`flex items-center gap-1 md:gap-2 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm ${post.interested?.includes(session?.user?.username) ? 'text-yellow-400 bg-yellow-500/10' : 'text-zinc-300 hover:bg-zinc-700'}`}>
+                      <Star className={`w-4 h-4 md:w-5 md:h-5 ${post.interested?.includes(session?.user?.username) ? 'fill-current' : ''}`} /> Interested
                     </button>
-                    <button onClick={() => router.push(`/user/${username}/post/${post.id}?tab=comments`)} className="flex items-center gap-2 text-zinc-300 hover:bg-zinc-700 py-2 px-3 rounded-lg transition-colors w-full justify-center">
-                      <MessageSquare size={20} /> Comment
+                    <button onClick={() => router.push(`/user/${username}/post/${post.id}?tab=comments`)} className="flex items-center gap-1 md:gap-2 text-zinc-300 hover:bg-zinc-700 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm">
+                      <MessageSquare className="w-4 h-4 md:w-5 md:h-5" /> Comment
                     </button>
-                    <button className="flex items-center gap-2 text-zinc-300 hover:bg-zinc-700 py-2 px-3 rounded-lg transition-colors w-full justify-center">
-                      <Share2 size={20} /> Share
+                    <button className="flex items-center gap-1 md:gap-2 text-zinc-300 hover:bg-zinc-700 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm">
+                      <Share2 className="w-4 h-4 md:w-5 md:h-5" /> Share
                     </button>
                   </div>
                 </div>
               ))}
             </div>
+            {posts.length > 1 && !showAllPosts && (
+              <div className="border-t border-zinc-700/50 p-4 text-center">
+                <button onClick={() => setShowAllPosts(true)} className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
+                  View all posts
+                </button>
+              </div>
+            )}
           </div>
 
           {/* About Section */}
@@ -1252,12 +1374,7 @@ const LinkedInProfilePage = () => {
 
         {/* Right Sidebar */}
         <div className="hidden lg:col-span-3 lg:block space-y-6 self-start sticky top-8">
-          <SidebarCard title="People also viewed" icon={<Users size={20} />}>
-            {people.slice(0, 3).map((person, i) => <PersonListItem key={i} {...person} />)}
-          </SidebarCard>
-          <SidebarCard title="People you may know" icon={<Users size={20} />}>
-            {people.slice(3, 5).map((person, i) => <PersonListItem key={i} {...person} />)}
-          </SidebarCard>
+          <SuggestionsSidebarCard />
         </div>
       </div>
       {activeMenuPostId !== null && (

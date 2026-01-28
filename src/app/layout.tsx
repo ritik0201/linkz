@@ -16,11 +16,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* PWA Manifest Link */}
+        <link rel="icon" href="/logo.gif" type="image/gif" />
+        <link rel="manifest" href="/manifest.json" />
+
+        {/* Stop Google Translate Popup */}
+        <meta name="google" content="notranslate" />
+
+        {/* Theme Color for Mobile */}
+        <meta name="theme-color" content="#000000" />
+      </head>
+
       <body>
         <Providers>
-          <Navbar/>
+          <Navbar />
           {children}
-          <Footer/>
+          <Footer />
         </Providers>
       </body>
     </html>

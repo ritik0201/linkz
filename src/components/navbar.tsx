@@ -4,11 +4,12 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-    Menu, X, Rocket, User, ArrowRight, LogOut, LayoutDashboard,
+    Menu, X, User, ArrowRight, LogOut, LayoutDashboard,
     Search, Home, Bell, MessageSquare, Briefcase, Settings, HelpCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession, signOut } from "next-auth/react";
+import InstallPWAButton from "./InstallPWAButton";
 
 const Navbar = () => {
     const { data: session } = useSession();
@@ -131,9 +132,7 @@ const Navbar = () => {
                 <div className="flex items-center justify-between h-8">
                     {/* Left Side: Logo */}
                     <Link href="/" className="flex items-center gap-2 group shrink-0">
-                        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
-                            <Rocket size={20} />
-                        </div>
+                        <img src="/logo.gif" alt="Linkz Logo" className="w-8 h-8 rounded-lg shadow-lg group-hover:scale-110 transition-transform" />
                         <span className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-indigo-400 to-violet-400 hidden sm:block">
                             CollabX
                         </span>
@@ -222,6 +221,8 @@ const Navbar = () => {
                                 <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Notifications</span>
                             </Link>
                         </div>
+
+                        <InstallPWAButton className="hidden md:flex" />
 
                         {/* Profile Dropdown */}
                         {session ? (
@@ -390,6 +391,9 @@ const Navbar = () => {
                                 <Link href="/notifications" className="flex flex-col items-center gap-1 p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg" onClick={() => setIsMobileMenuOpen(false)}>
                                     <Bell size={20} /> <span className="text-[10px]">Alerts</span>
                                 </Link>
+                            </div>
+                            <div className="pt-4 mt-4 border-t border-zinc-700/50">
+                                <InstallPWAButton className="w-full justify-center" />
                             </div>
                         </div>
                     </motion.div>
