@@ -9,10 +9,10 @@ import ProjectGrid from "./components/ProjectGrid";
 
 export default function WorkspaceDashboard() {
   return (
-    <div className="min-h-screen bg-[#05060A] flex text-white">
+    <div className="min-h-screen bg-[#05060A] flex flex-col lg:flex-row text-white">
       <Sidebar />
 
-      <main className="flex-1 px-10 py-20">
+      <main className="flex-1 px-4 md:px-10 py-10 md:py-20">
         <Header />
         <StatsGrid />
         <SearchBar />

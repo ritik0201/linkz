@@ -79,7 +79,7 @@ export default function Home() {
       if (data.data) {
         const posts = data.data;
         const map: Record<string, any> = {};
-        
+
         // Build usersMap and normalize post data for PosterCard
         posts.forEach((p: any) => {
           if (p.userId) map[p.userId.username] = p.userId;
@@ -88,7 +88,7 @@ export default function Home() {
             c.username = c.userId?.username; // Ensure username exists for PosterCard lookup
           });
         });
-        
+
         setUsersMap(map);
         setItems(shuffleArray(posts));
       }
@@ -119,7 +119,7 @@ export default function Home() {
     e.preventDefault();
     const text = commentTexts[postId];
     if (!session?.user || !text?.trim()) return;
-    
+
     // @ts-ignore
     const username = session.user.username;
 
@@ -133,15 +133,15 @@ export default function Home() {
       if (data.data) {
         // Update the specific post in the list
         setItems(prev => prev.map(item => {
-            if (item._id === postId) {
-                // Ensure comments have username for PosterCard
-                const updatedPost = data.data;
-                updatedPost.comments?.forEach((c: any) => {
-                    c.username = c.username || c.userId?.username;
-                });
-                return { ...item, ...updatedPost };
-            }
-            return item;
+          if (item._id === postId) {
+            // Ensure comments have username for PosterCard
+            const updatedPost = data.data;
+            updatedPost.comments?.forEach((c: any) => {
+              c.username = c.username || c.userId?.username;
+            });
+            return { ...item, ...updatedPost };
+          }
+          return item;
         }));
         setCommentTexts(prev => ({ ...prev, [postId]: "" }));
       }
@@ -160,10 +160,10 @@ export default function Home() {
       if (item._id === postId) {
         const list = action === 'like' ? item.likes : (item.interested || []);
         const isActive = list.includes(userIdentifier);
-        const newList = isActive 
+        const newList = isActive
           ? list.filter((u: string) => u !== userIdentifier)
           : [...list, userIdentifier];
-        
+
         return {
           ...item,
           [action === 'like' ? 'likes' : 'interested']: newList
@@ -212,18 +212,18 @@ export default function Home() {
             </div>
 
             {/* Main Feed */}
-            <div className="lg:col-span-6 space-y-6">
+            <div className="lg:col-span-6 space-y-6 w-full max-w-2xl mx-auto">
               {/* Create Post Button */}
               <div className="bg-[#2b2b2b] p-4 rounded-2xl shadow-lg border border-zinc-700/50 flex items-center gap-4">
-                <img 
+                <img
                   // @ts-ignore
-                  src={displayUser.image || displayUser.profileImage || "/user.png"} 
-                  alt="Profile" 
+                  src={displayUser.image || displayUser.profileImage || "/user.png"}
+                  alt="Profile"
                   className="w-12 h-12 rounded-full object-cover"
                 />
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="flex-1 text-left bg-zinc-800/50 hover:bg-zinc-800 text-zinc-400 px-6 py-3 rounded-full transition-all border border-zinc-700/50 font-medium"
+                  className="flex-1 text-left bg-zinc-800/50 hover:bg-zinc-800 text-zinc-400 px-4 md:px-6 py-3 rounded-full transition-all border border-zinc-700/50 font-medium text-sm md:text-base"
                 >
                   Share a project or research...
                 </button>
@@ -243,10 +243,10 @@ export default function Home() {
                   <PosterCard
                     key={item._id}
                     post={{
-                        ...item,
-                        description: item.content, // Map content to description for PosterCard
-                        coverImage: item.image,    // Map image to coverImage for PosterCard
-                        commentsCount: item.comments?.length || 0,
+                      ...item,
+                      description: item.content, // Map content to description for PosterCard
+                      coverImage: item.image,    // Map image to coverImage for PosterCard
+                      commentsCount: item.comments?.length || 0,
                     }}
                     commentText={commentTexts[item._id] || ""}
                     setCommentText={(text) => setCommentTexts(prev => ({ ...prev, [item._id]: text }))}
@@ -311,13 +311,13 @@ export default function Home() {
               </span>
               The Future of Startup Hiring
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white">
-              Connect with <br />
+            <h1 className="text-4xl md:text-7xl font-bold tracking-tight text-white leading-tight">
+              Connect with <br className="hidden sm:block" />
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400">
                 World-Class Talent
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-2xl text-gray-300 max-w-2xl mx-auto leading-relaxed px-4">
               Linkz bridges the gap between ambitious startups and exceptional developers. Build your dream team today.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -484,7 +484,7 @@ const CommunityCard = ({ user }: { user: any }) => (
       <div className="border-t border-zinc-700/50 pt-3">
         <h3 className="text-xs font-bold text-indigo-400 mb-2 hover:underline cursor-pointer">Groups</h3>
         <ul className="space-y-1">
-           <li className="flex items-center gap-2 text-zinc-400 hover:text-white text-xs cursor-pointer">
+          <li className="flex items-center gap-2 text-zinc-400 hover:text-white text-xs cursor-pointer">
             <Users size={12} /> <span>Startup Founders</span>
           </li>
         </ul>
@@ -512,10 +512,10 @@ const NewsCard = ({ posts }: { posts: FeedItem[] }) => {
         {trending.length > 0 ? trending.map((news, i) => (
           <li key={i} className="cursor-pointer group">
             <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span>
-                <h4 className="text-xs font-bold text-zinc-200 group-hover:text-indigo-400 group-hover:underline truncate">
-                  {news.topic || news.content.substring(0, 25) + (news.content.length > 25 ? "..." : "")}
-                </h4>
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span>
+              <h4 className="text-xs font-bold text-zinc-200 group-hover:text-indigo-400 group-hover:underline truncate">
+                {news.topic || news.content.substring(0, 25) + (news.content.length > 25 ? "..." : "")}
+              </h4>
             </div>
             <p className="text-[10px] text-zinc-500 pl-3.5 mt-0.5">
               {new Date(news.createdAt).toLocaleDateString()} • {(news.likes?.length || 0) + (news.comments?.length || 0)} engaged
@@ -533,17 +533,17 @@ const NewsCard = ({ posts }: { posts: FeedItem[] }) => {
 };
 
 const FooterLinks = () => (
-    <div className="mt-6 text-center px-4">
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-zinc-500">
-            {["About", "Accessibility", "Help Center", "Privacy & Terms", "Ad Choices", "Advertising", "Business Services", "Get the Linkz app", "More"].map((link) => (
-                <Link key={link} href="#" className="hover:text-indigo-400 hover:underline">{link}</Link>
-            ))}
-        </div>
-        <div className="mt-4 flex items-center justify-center gap-1 text-xs text-zinc-400">
-            <span className="font-bold text-indigo-500">Linkz</span>
-            <span>© 2024</span>
-        </div>
+  <div className="mt-6 text-center px-4">
+    <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-zinc-500">
+      {["About", "Accessibility", "Help Center", "Privacy & Terms", "Ad Choices", "Advertising", "Business Services", "Get the Linkz app", "More"].map((link) => (
+        <Link key={link} href="#" className="hover:text-indigo-400 hover:underline">{link}</Link>
+      ))}
     </div>
+    <div className="mt-4 flex items-center justify-center gap-1 text-xs text-zinc-400">
+      <span className="font-bold text-indigo-500">Linkz</span>
+      <span>© 2024</span>
+    </div>
+  </div>
 );
 
 const SuggestionsCard = () => {
@@ -589,8 +589,8 @@ const SuggestionsCard = () => {
           <p className="text-sm text-zinc-500 text-center py-4">No new suggestions.</p>
         )}
       </div>
-      <button 
-        onClick={fetchSuggestions} 
+      <button
+        onClick={fetchSuggestions}
         className="mt-6 w-full py-2 text-indigo-400 text-sm font-medium hover:text-indigo-300 hover:bg-indigo-500/10 rounded-lg transition-colors"
       >
         More suggestions

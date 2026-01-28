@@ -3,9 +3,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { 
-    Menu, X, Rocket, User, ArrowRight, LogOut, LayoutDashboard, 
-    Search, Home, Bell, MessageSquare, Briefcase, Settings, HelpCircle 
+import {
+    Menu, X, Rocket, User, ArrowRight, LogOut, LayoutDashboard,
+    Search, Home, Bell, MessageSquare, Briefcase, Settings, HelpCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession, signOut } from "next-auth/react";
@@ -31,7 +31,7 @@ const Navbar = () => {
             setScrolled(window.scrollY > 20);
         };
         window.addEventListener("scroll", handleScroll);
-        
+
         const handleClickOutside = (event: MouseEvent) => {
             if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
                 setIsProfileOpen(false);
@@ -140,8 +140,8 @@ const Navbar = () => {
                     </Link>
 
                     {/* Center/Right Side */}
-                    <div className="flex items-center gap-2 md:gap-6 flex-1 justify-end">
-                        
+                    <div className="flex items-center gap-1 md:gap-6 flex-1 justify-end">
+
                         {/* Search Bar */}
                         <div className="relative hidden md:block w-full max-w-md mx-4" ref={searchRef}>
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -180,10 +180,10 @@ const Navbar = () => {
                                                             setSearchQuery("");
                                                         }}
                                                     >
-                                                        <img 
-                                                            src={user.profileImage || user.profilePicture || user.image || user.avatar || "/user.png"} 
-                                                            alt={user.fullName} 
-                                                            className="w-8 h-8 rounded-full object-cover" 
+                                                        <img
+                                                            src={user.profileImage || user.profilePicture || user.image || user.avatar || "/user.png"}
+                                                            alt={user.fullName}
+                                                            className="w-8 h-8 rounded-full object-cover"
                                                         />
                                                         <div>
                                                             <p className="text-white text-sm font-bold truncate">{user.fullName}</p>
@@ -225,13 +225,13 @@ const Navbar = () => {
 
                         {/* Profile Dropdown */}
                         {session ? (
-                            <div className="relative ml-2" ref={profileRef}>
+                            <div className="relative ml-1 md:ml-2" ref={profileRef}>
                                 <button
                                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                                     className="flex items-center gap-2 focus:outline-none"
                                 >
                                     <img
-                                        className="h-9 w-9 rounded-full object-cover border-2 border-transparent hover:border-indigo-500 transition-colors"
+                                        className="h-8 w-8 md:h-9 md:w-9 rounded-full object-cover border-2 border-transparent hover:border-indigo-500 transition-colors"
                                         src={userAvatar || (session.user as any).image || (session.user as any).profileImage || "/user.png"}
                                         alt="User Profile"
                                     />
@@ -258,7 +258,7 @@ const Navbar = () => {
                                                         <p className="text-zinc-400 text-xs truncate">{(session.user as any).email}</p>
                                                     </div>
                                                 </div>
-                                                <Link 
+                                                <Link
                                                     href={`/user/${(session.user as any).username}`}
                                                     className="block w-full text-center py-1.5 border border-indigo-500 text-indigo-400 rounded-full text-sm font-medium hover:bg-indigo-500/10 transition-colors"
                                                     onClick={() => setIsProfileOpen(false)}
@@ -310,8 +310,8 @@ const Navbar = () => {
                         )}
 
                         {/* Mobile Menu Button */}
-                        <button 
-                            className="md:hidden ml-2 text-zinc-300"
+                        <button
+                            className="md:hidden ml-1 text-zinc-300 p-1"
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         >
                             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -337,12 +337,15 @@ const Navbar = () => {
                                     className="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-10 pr-4 py-2 text-white text-sm focus:outline-none focus:border-indigo-500"
                                     placeholder={placeholder}
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setShowResults(true);
+                                    }}
                                     onKeyDown={handleSearch}
                                 />
-                                {searchQuery.trim().length > 0 && (
-                                    <div className="mt-2 bg-zinc-900 border border-zinc-700 rounded-lg overflow-hidden">
-                                         {searchResults.length > 0 ? (
+                                {showResults && searchQuery.trim().length > 0 && (
+                                    <div className="mt-2 bg-zinc-900 border border-zinc-700 rounded-lg overflow-hidden max-h-60 overflow-y-auto custom-scrollbar">
+                                        {searchResults.length > 0 ? (
                                             searchResults.map((user) => (
                                                 <Link
                                                     key={user._id}
@@ -351,12 +354,13 @@ const Navbar = () => {
                                                     onClick={() => {
                                                         setIsMobileMenuOpen(false);
                                                         setSearchQuery("");
+                                                        setShowResults(false);
                                                     }}
                                                 >
-                                                    <img 
-                                                        src={user.profileImage || user.profilePicture || user.image || user.avatar || "/user.png"} 
-                                                        alt={user.fullName} 
-                                                        className="w-8 h-8 rounded-full object-cover" 
+                                                    <img
+                                                        src={user.profileImage || user.profilePicture || user.image || user.avatar || "/user.png"}
+                                                        alt={user.fullName}
+                                                        className="w-8 h-8 rounded-full object-cover"
                                                     />
                                                     <div>
                                                         <p className="text-white text-sm font-bold truncate">{user.fullName}</p>
