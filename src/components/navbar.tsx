@@ -260,7 +260,7 @@ const Navbar = () => {
                                                     </div>
                                                 </div>
                                                 <Link
-                                                    href={`/user/${(session.user as any).username}`}
+                                                    href={(session.user as any).role === 'startup' ? "/startup/dashboard" : `/user/${(session.user as any).username}`}
                                                     className="block w-full text-center py-1.5 border border-indigo-500 text-indigo-400 rounded-full text-sm font-medium hover:bg-indigo-500/10 transition-colors"
                                                     onClick={() => setIsProfileOpen(false)}
                                                 >

@@ -58,7 +58,7 @@ const SignupAndSiginForUser = () => {
                             requiredRole: "user",
                         });
                         if (result?.error) setError(result.error);
-                        else router.push("/dashboard");
+                        else router.push("/");
                     }
                 } else {
                     // Password Login
@@ -69,7 +69,7 @@ const SignupAndSiginForUser = () => {
                         requiredRole: "user",
                     });
                     if (result?.error) setError(result.error);
-                    else router.push("/dashboard");
+                    else router.push("/");
                 }
             } else {
                 if (verificationStep) {

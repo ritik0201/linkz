@@ -66,7 +66,7 @@ const AuthForm = ({ role }: AuthFormProps) => {
                             requiredRole: role // Dynamic role
                         });
                         if (result?.error) setError(result.error);
-                        else router.push("/dashboard");
+                        else router.push("/");
                     }
                 } else {
                     // Password Login
@@ -77,7 +77,7 @@ const AuthForm = ({ role }: AuthFormProps) => {
                         requiredRole: role // Dynamic role
                     });
                     if (result?.error) setError(result.error);
-                    else router.push("/dashboard");
+                    else router.push("/");
                 }
             } else {
                 if (verificationStep) {

@@ -58,7 +58,7 @@ const SignupAndSiginForStartup = () => {
                             requiredRole: "startup",
                         });
                         if (result?.error) setError(result.error);
-                        else router.push("/startup/dashboard");
+                        else router.push("/");
                     }
                 } else {
                     // Password Login
@@ -72,7 +72,7 @@ const SignupAndSiginForStartup = () => {
                     if (result?.error) {
                         setError(result.error);
                     } else {
-                        router.push("/startup/dashboard");
+                        router.push("/");
                     }
                 }
             } else {

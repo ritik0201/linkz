@@ -508,7 +508,7 @@ const FeedProfileCard = ({ user }: { user: DisplayUser | null }) => (
           <p className="text-white font-bold">{user?.projectsCount ?? 0}</p>
         </div>
       </div>
-      <Link href={`/user/${user?.username}`} className="mt-6 block w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors text-sm font-medium">
+      <Link href={user?.role === 'startup' ? "/startup/dashboard" : `/user/${user?.username}`} className="mt-6 block w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors text-sm font-medium">
         View Profile
       </Link>
     </div>
