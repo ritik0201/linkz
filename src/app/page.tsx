@@ -417,7 +417,7 @@ export default function Home() {
               </span>
             </h1>
             <p className="text-lg md:text-2xl text-gray-300 max-w-2xl mx-auto leading-relaxed px-4">
-              Linkz bridges the gap between ambitious startups and exceptional developers. Build your dream team today.
+              CollaBharat bridges the gap between ambitious startups and exceptional developers. Build your dream team today.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <Link
@@ -446,7 +446,7 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <FeatureCard
-              icon={<img src="/logo.gif" alt="Fast Matching" className="w-8 h-8" />}
+              icon={<img src="/logo.png" alt="Fast Matching" className="w-8 h-8" />}
               title="Fast Matching"
               description="Our AI-driven algorithms connect you with the perfect candidates in hours, not weeks."
             />
@@ -582,13 +582,13 @@ const NewsCard = ({ posts }: { posts: FeedItem[] }) => {
 const FooterLinks = () => (
   <div className="mt-6 text-center px-4">
     <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-zinc-500">
-      {["About", "Accessibility", "Help Center", "Privacy & Terms", "Ad Choices", "Advertising", "Business Services", "Get the Linkz app", "More"].map((link) => (
+      {["About", "Accessibility", "Help Center", "Privacy & Terms", "Ad Choices", "Advertising", "Business Services", "Get the CollaBharat app", "More"].map((link) => (
         <Link key={link} href="#" className="hover:text-indigo-400 hover:underline">{link}</Link>
       ))}
     </div>
     <div className="mt-4 flex items-center justify-center gap-1 text-xs text-zinc-400">
-      <img src="/logo.gif" alt="Linkz Logo" className="w-5 h-5" />
-      <span className="font-bold text-indigo-500">Linkz</span>
+      <img src="/logo.png" alt="CollaBharat Logo" className="w-5 h-5" />
+      <span className="font-bold text-indigo-500">CollaBharat</span>
       <span>© 2024</span>
     </div>
   </div>
@@ -638,7 +638,7 @@ const SuggestionItem = ({ user, onFollow, isFollowing: initialIsFollowing }: { u
         <Link href={`/user/${user.username}`} className="hover:underline">
           <p className="font-bold text-white text-sm truncate">{user.fullName}</p>
         </Link>
-        <p className="text-xs text-zinc-400 truncate">{user.headline || "New to Linkz"}</p>
+        <p className="text-xs text-zinc-400 truncate">{user.headline || "New to CollaBharat"}</p>
         <div className="flex items-center gap-2 mt-2">
           <button
             onClick={handleFollowToggle}

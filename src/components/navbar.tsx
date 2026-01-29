@@ -132,9 +132,9 @@ const Navbar = () => {
                 <div className="flex items-center justify-between h-8">
                     {/* Left Side: Logo */}
                     <Link href="/" className="flex items-center gap-2 group shrink-0">
-                        <img src="/logo.gif" alt="Linkz Logo" className="w-8 h-8 rounded-lg shadow-lg group-hover:scale-110 transition-transform" />
+                        <img src="/logo.png" alt="Linkz Logo" className="w-8 h-8 rounded-lg shadow-lg group-hover:scale-110 transition-transform" />
                         <span className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-indigo-400 to-violet-400 hidden sm:block">
-                            CollabX
+                            CollaBharat
                         </span>
                     </Link>
 
