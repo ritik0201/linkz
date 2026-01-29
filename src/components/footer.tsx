@@ -21,10 +21,10 @@ const Footer = () => {
                             Connecting talent with opportunity. The platform that bridges the gap between ambitious startups and skilled professionals.
                         </p>
                         <div className="flex items-center gap-4">
-                            <SocialLink icon={<Twitter size={18} />} href="#" />
-                            <SocialLink icon={<Linkedin size={18} />} href="#" />
-                            <SocialLink icon={<Instagram size={18} />} href="#" />
-                            <SocialLink icon={<Github size={18} />} href="#" />
+                            <SocialLink icon={<Twitter size={18} />} href="https://twitter.com/collaBharat" />
+                            <SocialLink icon={<Linkedin size={18} />} href="https://linkedin.com/company/collaBharat" />
+                            <SocialLink icon={<Instagram size={18} />} href="https://instagram.com/collaBharat" />
+                            <SocialLink icon={<Github size={18} />} href="https://github.com/collaBharat" />
                         </div>
                     </div>
 
@@ -32,20 +32,20 @@ const Footer = () => {
                     <div>
                         <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-6">Platform</h3>
                         <ul className="space-y-3">
-                            <FooterLink href="#">Find Work</FooterLink>
-                            <FooterLink href="#">Hire Talent</FooterLink>
-                            <FooterLink href="#">Success Stories</FooterLink>
-                            <FooterLink href="#">Pricing</FooterLink>
+                            <FooterLink href="/find-work">Find Work</FooterLink>
+                            <FooterLink href="/hire-talent">Hire Talent</FooterLink>
+                            <FooterLink href="/success-stories">Success Stories</FooterLink>
+                            <FooterLink href="/pricing">Pricing</FooterLink>
                         </ul>
                     </div>
 
                     <div>
                         <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-6">Resources</h3>
                         <ul className="space-y-3">
-                            <FooterLink href="#">Blog</FooterLink>
-                            <FooterLink href="#">Help Center</FooterLink>
-                            <FooterLink href="#">Guidelines</FooterLink>
-                            <FooterLink href="#">Events</FooterLink>
+                            <FooterLink href="/blog">Blog</FooterLink>
+                            <FooterLink href="/help">Help Center</FooterLink>
+                            <FooterLink href="/guidelines">Guidelines</FooterLink>
+                            <FooterLink href="/events">Events</FooterLink>
                         </ul>
                     </div>
 

@@ -174,7 +174,7 @@ const CareersPage = () => {
                                         <span className="px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs border border-zinc-200 dark:border-zinc-700">{job.type}</span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
+                                <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-10px group-hover:translate-x-0">
                                     Apply Now <ArrowRight size={16} />
                                 </div>
                             </motion.div>
