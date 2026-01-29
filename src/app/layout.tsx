@@ -5,6 +5,7 @@ import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://collab-bharat.online"),
   title: "Collab Bharat",
   description: "Collab Bharat",
 
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Collab Bharat",
     description: "Collab Bharat",
+    url: "https://collab-bharat.online",
     siteName: "Collab Bharat",
     images: [
       {
