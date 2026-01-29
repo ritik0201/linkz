@@ -9,7 +9,7 @@ export default function UserSigninPage() {
             <div className="flex-grow pt-24">
                 <AuthForm role="user" />
             </div>
-            <Footer />
+           
         </main>
     );
 }
