@@ -21,10 +21,10 @@ const Footer = () => {
                             Connecting talent with opportunity. The platform that bridges the gap between ambitious startups and skilled professionals.
                         </p>
                         <div className="flex items-center gap-4">
-                            <SocialLink icon={<Twitter size={18} />} href="https://twitter.com/collaBharat" />
-                            <SocialLink icon={<Linkedin size={18} />} href="https://linkedin.com/company/collaBharat" />
-                            <SocialLink icon={<Instagram size={18} />} href="https://instagram.com/collaBharat" />
-                            <SocialLink icon={<Github size={18} />} href="https://github.com/collaBharat" />
+                            <SocialLink icon={<Twitter size={18} />} href="https://x.com/CollabB47119" />
+                            <SocialLink icon={<Linkedin size={18} />} href="https://www.linkedin.com/in/collab-bharat/" />
+                            <SocialLink icon={<Instagram size={18} />} href="https://www.instagram.com/collabbharat0/" />
+                            <SocialLink icon={<Github size={18} />} href="https://github.com/collabbharat" />
                         </div>
                     </div>
 
