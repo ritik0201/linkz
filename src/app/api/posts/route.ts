@@ -4,7 +4,7 @@ import Post from "@/models/Post";
 import User from "@/models/User";
 import cloudinary from "@/lib/cloudinary";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import Profile from "@/models/Profile";
 import ProjectOrResearch from "@/models/projectOrResearch";
 

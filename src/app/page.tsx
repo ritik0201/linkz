@@ -73,39 +73,39 @@ interface DisplayUser extends Omit<Partial<CurrentUserProfile>, 'image' | 'name'
 // --- END: Type Definitions ---
 
 const PostSkeleton = () => (
-    <div className="bg-[#2b2b2b] p-4 sm:p-6 rounded-2xl shadow-lg border border-zinc-700/50 animate-pulse w-full">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-zinc-700"></div>
-            <div className="space-y-2">
-                <div className="h-4 bg-zinc-700 rounded w-32"></div>
-                <div className="h-3 bg-zinc-700 rounded w-24"></div>
-            </div>
-        </div>
-
-        {/* Content */}
-        <div className="mt-4 space-y-2">
-            <div className="h-4 bg-zinc-700 rounded w-full"></div>
-            <div className="h-4 bg-zinc-700 rounded w-5/6"></div>
-        </div>
-
-        {/* Image */}
-        <div className="mt-4 aspect-video w-full bg-zinc-700 rounded-xl"></div>
-
-        {/* Stats */}
-        <div className="mt-4 flex justify-between items-center">
-            <div className="h-4 bg-zinc-700 rounded w-16"></div>
-            <div className="h-4 bg-zinc-700 rounded w-24"></div>
-        </div>
-
-        {/* Actions */}
-        <div className="mt-2 pt-3 border-t border-zinc-700/50 flex gap-2">
-            <div className="h-9 bg-zinc-700 rounded-lg w-full"></div>
-            <div className="h-9 bg-zinc-700 rounded-lg w-full"></div>
-            <div className="h-9 bg-zinc-700 rounded-lg w-full"></div>
-            <div className="h-9 bg-zinc-700 rounded-lg w-full"></div>
-        </div>
+  <div className="bg-[#2b2b2b] p-4 sm:p-6 rounded-2xl shadow-lg border border-zinc-700/50 animate-pulse w-full">
+    {/* Header */}
+    <div className="flex items-center gap-3">
+      <div className="w-12 h-12 rounded-full bg-zinc-700"></div>
+      <div className="space-y-2">
+        <div className="h-4 bg-zinc-700 rounded w-32"></div>
+        <div className="h-3 bg-zinc-700 rounded w-24"></div>
+      </div>
     </div>
+
+    {/* Content */}
+    <div className="mt-4 space-y-2">
+      <div className="h-4 bg-zinc-700 rounded w-full"></div>
+      <div className="h-4 bg-zinc-700 rounded w-5/6"></div>
+    </div>
+
+    {/* Image */}
+    <div className="mt-4 aspect-video w-full bg-zinc-700 rounded-xl"></div>
+
+    {/* Stats */}
+    <div className="mt-4 flex justify-between items-center">
+      <div className="h-4 bg-zinc-700 rounded w-16"></div>
+      <div className="h-4 bg-zinc-700 rounded w-24"></div>
+    </div>
+
+    {/* Actions */}
+    <div className="mt-2 pt-3 border-t border-zinc-700/50 flex gap-2">
+      <div className="h-9 bg-zinc-700 rounded-lg w-full"></div>
+      <div className="h-9 bg-zinc-700 rounded-lg w-full"></div>
+      <div className="h-9 bg-zinc-700 rounded-lg w-full"></div>
+      <div className="h-9 bg-zinc-700 rounded-lg w-full"></div>
+    </div>
+  </div>
 );
 
 export default function Home() {
@@ -113,6 +113,7 @@ export default function Home() {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfile | null>(null);
@@ -141,8 +142,12 @@ export default function Home() {
   }, [status]);
 
   const fetchFeed = async (pageNum: number) => {
-    if (pageNum === 1) setLoading(true);
-    else setLoadingMore(true);
+    if (pageNum === 1) {
+      setLoading(true);
+      setError(null);
+    } else {
+      setLoadingMore(true);
+    }
 
     try {
       const res = await fetch(`/api/posts?page=${pageNum}&limit=5`);
@@ -176,8 +181,11 @@ export default function Home() {
         setPage(pageNum);
         setHasMore(data.pagination.hasMore);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch feed:", error);
+      if (pageNum === 1) {
+        setError("Failed to load feed. Please check your connection and try again.");
+      }
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -242,7 +250,7 @@ export default function Home() {
     const userIdentifier = sessionUser.username;
 
     const originalItems = [...items];
-    
+
     setItems(prevItems => prevItems.map(item => {
       if (item._id === postId) {
         const list = action === 'like' ? item.likes : (item.interested || []);
@@ -324,6 +332,16 @@ export default function Home() {
               {loading ? (
                 <div className="space-y-6">
                   {[...Array(3)].map((_, i) => <PostSkeleton key={i} />)}
+                </div>
+              ) : error ? (
+                <div className="text-center py-20 bg-red-900/10 rounded-2xl border border-red-900/50">
+                  <p className="text-red-400 font-medium">{error}</p>
+                  <button
+                    onClick={() => fetchFeed(1)}
+                    className="mt-4 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-all text-sm font-bold"
+                  >
+                    Retry
+                  </button>
                 </div>
               ) : items.length === 0 ? (
                 <div className="text-center py-20 bg-[#2b2b2b] rounded-2xl border border-zinc-700/50">
@@ -643,11 +661,10 @@ const SuggestionItem = ({ user, onFollow, isFollowing: initialIsFollowing }: { u
           <button
             onClick={handleFollowToggle}
             disabled={isLoading}
-            className={`flex items-center justify-center gap-1.5 w-24 text-xs font-bold py-1.5 rounded-full transition-colors disabled:opacity-50 ${
-              isFollowing
+            className={`flex items-center justify-center gap-1.5 w-24 text-xs font-bold py-1.5 rounded-full transition-colors disabled:opacity-50 ${isFollowing
                 ? 'bg-zinc-700 hover:bg-zinc-600 text-white'
                 : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-            }`}
+              }`}
           >
             {isLoading ? <Loader2 size={14} className="animate-spin" /> : (isFollowing ? 'Following' : 'Follow')}
           </button>

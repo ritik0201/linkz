@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/dbConnect";
 import Profile from "@/models/Profile";
 import User from "@/models/User";
@@ -126,7 +126,7 @@ export async function POST(req: Request) {
   try {
     const userId = (session.user as any)._id;
     const body = await req.json();
-    
+
     // Extract mobile to update User model
     // Also extract user and _id to prevent updating them in Profile
     const { mobile, user, _id, username, ...profileUpdates } = body;
