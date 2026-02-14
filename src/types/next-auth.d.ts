@@ -1,23 +1,24 @@
-import 'next-auth';
-import { DefaultSession, DefaultUser } from 'next-auth';
-import { JWT } from 'next-auth/jwt';
+import "next-auth";
+import { DefaultSession, DefaultUser } from "next-auth";
+import { JWT } from "next-auth/jwt";
 
 /**
  * Module augmentation for "next-auth" to add custom properties to the session and user objects.
  */
-declare module 'next-auth' {
+declare module "next-auth" {
   /**
    * Extends the default Session interface to include custom user properties.
    */
   interface Session {
     user: {
       _id: string;
+      id: string;
       role: string;
       isVerified: boolean;
       fullName: string;
       username: string;
       mobile?: string;
-    } & DefaultSession['user'];
+    } & DefaultSession["user"];
   }
 
   /**
@@ -25,6 +26,7 @@ declare module 'next-auth' {
    */
   interface User extends DefaultUser {
     _id: string;
+    id: string;
     role: string;
     isVerified: boolean;
     fullName: string;
@@ -36,9 +38,10 @@ declare module 'next-auth' {
 /**
  * Module augmentation for "next-auth/jwt" to add custom properties to the JWT token.
  */
-declare module 'next-auth/jwt' {
+declare module "next-auth/jwt" {
   interface JWT {
     _id: string;
+    id: string;
     role: string;
     isVerified: boolean;
     fullName: string;

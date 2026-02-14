@@ -1,11 +1,36 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useSession, signOut } from 'next-auth/react';
-import { Briefcase, GraduationCap, MapPin, Plus, Send, Star, Linkedin, Github, Twitter, MoreHorizontal, ThumbsUp, MessageSquare, Share2, Eye, Users, Phone, Pencil, X, Trash2, Award, LogOut, Camera, Loader2, PlusCircle } from 'lucide-react';
-import CreatePostModal from '@/components/CreatePostModal';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
+import React, { useState, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
+import {
+  Briefcase,
+  GraduationCap,
+  MapPin,
+  Plus,
+  Send,
+  Star,
+  Linkedin,
+  Github,
+  Twitter,
+  MoreHorizontal,
+  ThumbsUp,
+  MessageSquare,
+  Share2,
+  Eye,
+  Users,
+  Phone,
+  Pencil,
+  X,
+  Trash2,
+  Award,
+  LogOut,
+  Camera,
+  Loader2,
+  PlusCircle,
+} from "lucide-react";
+import CreatePostModal from "@/components/CreatePostModal";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface ProfileData {
   user: {
@@ -50,12 +75,20 @@ interface ProfileData {
 
 const ProfileSidebarCard = ({ profile }: { profile: ProfileData }) => (
   <div className="bg-[#2b2b2b] rounded-2xl overflow-hidden shadow-lg border border-zinc-700">
-    <div className="h-20 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2070&auto=format&fit=crop')" }}></div>
+    <div
+      className="h-20 bg-cover bg-center"
+      style={{
+        backgroundImage:
+          "url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2070&auto=format&fit=crop')",
+      }}
+    ></div>
     <div className="p-4 text-center relative">
       <div className="absolute -top-10 left-1/2 -translate-x-1/2">
         <img
           className="w-20 h-20 rounded-full border-4 border-[#2b2b2b] object-cover"
-          src={profile.profilePicture || profile.user.profileImage || "/user.png"}
+          src={
+            profile.profilePicture || profile.user.profileImage || "/user.png"
+          }
           alt="Profile Picture"
         />
       </div>
@@ -66,30 +99,48 @@ const ProfileSidebarCard = ({ profile }: { profile: ProfileData }) => (
       <div className="mt-4 pt-4 border-t border-zinc-700/50 text-left space-y-1">
         <div className="flex justify-between items-center text-sm text-zinc-400 hover:bg-zinc-800/50 px-2 py-1.5 rounded-md transition-colors cursor-pointer">
           <span className="font-semibold">Followers</span>
-          <span className="text-indigo-400 font-bold">{profile.followers?.length || 0}</span>
+          <span className="text-indigo-400 font-bold">
+            {profile.followers?.length || 0}
+          </span>
         </div>
         <div className="flex justify-between items-center text-sm text-zinc-400 hover:bg-zinc-800/50 px-2 py-1.5 rounded-md transition-colors cursor-pointer">
           <span className="font-semibold">Following</span>
-          <span className="text-indigo-400 font-bold">{profile.following?.length || 0}</span>
+          <span className="text-indigo-400 font-bold">
+            {profile.following?.length || 0}
+          </span>
         </div>
       </div>
     </div>
   </div>
 );
 
-const SidebarCard = ({ title, icon, children }: { title: string, icon?: React.ReactNode, children: React.ReactNode }) => (
+const SidebarCard = ({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) => (
   <div className="bg-[#2b2b2b] p-5 rounded-2xl shadow-lg border border-zinc-700">
     <div className="flex items-center gap-2 mb-4">
       {icon}
       <h3 className="text-lg font-bold">{title}</h3>
     </div>
-    <div className="space-y-4">
-      {children}
-    </div>
+    <div className="space-y-4">{children}</div>
   </div>
 );
 
-const SuggestionItem = ({ user, onFollow, isFollowing: initialIsFollowing }: { user: any; onFollow: () => void; isFollowing: boolean }) => {
+const SuggestionItem = ({
+  user,
+  onFollow,
+  isFollowing: initialIsFollowing,
+}: {
+  user: any;
+  onFollow: () => void;
+  isFollowing: boolean;
+}) => {
   const { data: session } = useSession();
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [isLoading, setIsLoading] = useState(false);
@@ -128,28 +179,47 @@ const SuggestionItem = ({ user, onFollow, isFollowing: initialIsFollowing }: { u
       <Link href={`/user/${user.username}`}>
         <img
           className="w-12 h-12 rounded-full object-cover"
-          src={user.profilePicture || user.profileImage || user.image || user.avatar || "/user.png"}
+          src={
+            user.profilePicture ||
+            user.profileImage ||
+            user.image ||
+            user.avatar ||
+            "/user.png"
+          }
           alt={user.fullName}
         />
       </Link>
       <div className="flex-1 min-w-0">
         <Link href={`/user/${user.username}`} className="hover:underline">
-          <p className="font-bold text-white text-sm truncate">{user.fullName}</p>
+          <p className="font-bold text-white text-sm truncate">
+            {user.fullName}
+          </p>
         </Link>
-        <p className="text-xs text-zinc-400 truncate">{user.headline || "New to Linkz"}</p>
+        <p className="text-xs text-zinc-400 truncate">
+          {user.headline || "New to Linkz"}
+        </p>
         <div className="flex items-center gap-2 mt-2">
           <button
             onClick={handleFollowToggle}
             disabled={isLoading}
             className={`flex items-center justify-center gap-1.5 w-24 text-xs font-bold py-1.5 rounded-full transition-colors disabled:opacity-50 ${
               isFollowing
-                ? 'bg-zinc-700 hover:bg-zinc-600 text-white'
-                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                ? "bg-zinc-700 hover:bg-zinc-600 text-white"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white"
             }`}
           >
-            {isLoading ? <Loader2 size={14} className="animate-spin" /> : (isFollowing ? 'Following' : 'Follow')}
+            {isLoading ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : isFollowing ? (
+              "Following"
+            ) : (
+              "Follow"
+            )}
           </button>
-          <Link href={`/user/${user.username}`} className="flex items-center justify-center w-24 text-xs font-bold py-1.5 rounded-full transition-colors border border-zinc-500 text-zinc-300 hover:bg-zinc-700 hover:border-zinc-400">
+          <Link
+            href={`/user/${user.username}`}
+            className="flex items-center justify-center w-24 text-xs font-bold py-1.5 rounded-full transition-colors border border-zinc-500 text-zinc-300 hover:bg-zinc-700 hover:border-zinc-400"
+          >
             View Profile
           </Link>
         </div>
@@ -158,36 +228,66 @@ const SuggestionItem = ({ user, onFollow, isFollowing: initialIsFollowing }: { u
   );
 };
 
-const GroupListItem = ({ name, members, avatar }: { name: string, members: string, avatar: string }) => (
-    <div className="flex items-center gap-3">
-      <img className="w-10 h-10 rounded-lg object-cover" src={avatar} alt={name} />
-      <div>
-        <p className="font-semibold text-white hover:underline cursor-pointer">{name}</p>
-        <p className="text-xs text-zinc-400">{members}</p>
-      </div>
+const GroupListItem = ({
+  name,
+  members,
+  avatar,
+}: {
+  name: string;
+  members: string;
+  avatar: string;
+}) => (
+  <div className="flex items-center gap-3">
+    <img
+      className="w-10 h-10 rounded-lg object-cover"
+      src={avatar}
+      alt={name}
+    />
+    <div>
+      <p className="font-semibold text-white hover:underline cursor-pointer">
+        {name}
+      </p>
+      <p className="text-xs text-zinc-400">{members}</p>
     </div>
-  );
+  </div>
+);
 
 const GroupsSidebarCard = () => (
-    <SidebarCard title="Recent Groups" icon={<Users size={20} />}>
-        <GroupListItem name="React Developers" members="120k members" avatar="https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=2070&auto=format&fit=crop" />
-        <GroupListItem name="Next.js Community" members="80k members" avatar="https://images.unsplash.com/photo-1549423554-29405a1539e0?q=80&w=2070&auto=format&fit=crop" />
-        <GroupListItem name="TypeScript Enthusiasts" members="95k members" avatar="https://images.unsplash.com/photo-1619410283995-43d9134e7656?q=80&w=2070&auto=format&fit=crop" />
-    </SidebarCard>
+  <SidebarCard title="Recent Groups" icon={<Users size={20} />}>
+    <GroupListItem
+      name="React Developers"
+      members="120k members"
+      avatar="https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=2070&auto=format&fit=crop"
+    />
+    <GroupListItem
+      name="Next.js Community"
+      members="80k members"
+      avatar="https://images.unsplash.com/photo-1549423554-29405a1539e0?q=80&w=2070&auto=format&fit=crop"
+    />
+    <GroupListItem
+      name="TypeScript Enthusiasts"
+      members="95k members"
+      avatar="https://images.unsplash.com/photo-1619410283995-43d9134e7656?q=80&w=2070&auto=format&fit=crop"
+    />
+  </SidebarCard>
 );
 
 const SuggestionsSidebarCard = () => {
   const { data: session } = useSession();
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUserFollowing, setCurrentUserFollowing] = useState<string[]>([]);
+  const [currentUserFollowing, setCurrentUserFollowing] = useState<string[]>(
+    [],
+  );
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [suggestionsRes, profileRes] = await Promise.all([
         fetch("/api/users/suggestions"),
-        session?.user?.username ? fetch(`/api/profile?userid=${session.user.username}`) : Promise.resolve(null)
+        session?.user?.username
+          ? fetch(`/api/profile?userid=${session.user.username}`)
+          : Promise.resolve(null),
       ]);
 
       if (suggestionsRes.ok) {
@@ -199,7 +299,6 @@ const SuggestionsSidebarCard = () => {
         const profileData = await profileRes.json();
         setCurrentUserFollowing(profileData.data?.following || []);
       }
-
     } catch (error) {
       console.error("Failed to fetch data for suggestions:", error);
     } finally {
@@ -235,13 +334,25 @@ const SuggestionsSidebarCard = () => {
           />
         ))
       ) : (
-        <p className="text-sm text-zinc-500 text-center py-4">No new suggestions.</p>
+        <p className="text-sm text-zinc-500 text-center py-4">
+          No new suggestions.
+        </p>
       )}
     </SidebarCard>
   );
 };
 
-const EditIntroModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: boolean; onClose: () => void; initialData: any; onSave: (data: any) => void }) => {
+const EditIntroModal = ({
+  isOpen,
+  onClose,
+  initialData,
+  onSave,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  initialData: any;
+  onSave: (data: any) => void;
+}) => {
   const [formData, setFormData] = useState(initialData);
 
   useEffect(() => {
@@ -265,36 +376,88 @@ const EditIntroModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: bool
       <div className="bg-[#2b2b2b] rounded-2xl w-full max-w-lg border border-zinc-700 shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex justify-between items-center p-4 border-b border-zinc-700">
           <h2 className="text-xl font-bold text-white">Edit Intro</h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white transition-colors"><X size={24} /></button>
+          <button
+            onClick={onClose}
+            className="text-zinc-400 hover:text-white transition-colors"
+          >
+            <X size={24} />
+          </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">Headline</label>
-            <input type="text" name="headline" value={formData.headline} onChange={handleChange} className="w-full bg-[#1a1a1a] border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: Developer at Company" />
+            <label className="block text-sm font-medium text-zinc-300 mb-1">
+              Headline
+            </label>
+            <input
+              type="text"
+              name="headline"
+              value={formData.headline}
+              onChange={handleChange}
+              className="w-full bg-[#1a1a1a] border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+              placeholder="Ex: Developer at Company"
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">Location</label>
-            <input type="text" name="location" value={formData.location} onChange={handleChange} className="w-full bg-[#1a1a1a] border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: San Francisco, CA" />
+            <label className="block text-sm font-medium text-zinc-300 mb-1">
+              Location
+            </label>
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              className="w-full bg-[#1a1a1a] border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+              placeholder="Ex: San Francisco, CA"
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">Mobile Number</label>
-            <input type="text" name="mobile" value={formData.mobile} onChange={handleChange} className="w-full bg-[#1a1a1a] border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500" placeholder="+1 234 567 890" />
+            <label className="block text-sm font-medium text-zinc-300 mb-1">
+              Mobile Number
+            </label>
+            <input
+              type="text"
+              name="mobile"
+              value={formData.mobile}
+              onChange={handleChange}
+              className="w-full bg-[#1a1a1a] border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+              placeholder="+1 234 567 890"
+            />
           </div>
         </form>
         <div className="p-4 border-t border-zinc-700 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors">Cancel</button>
-          <button onClick={handleSubmit} className="px-4 py-2 rounded-full font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">Save</button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 rounded-full font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          >
+            Save
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-const EditAboutModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: boolean; onClose: () => void; initialData: any; onSave: (data: any) => void }) => {
-  const [bio, setBio] = useState(initialData.bio || '');
+const EditAboutModal = ({
+  isOpen,
+  onClose,
+  initialData,
+  onSave,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  initialData: any;
+  onSave: (data: any) => void;
+}) => {
+  const [bio, setBio] = useState(initialData.bio || "");
 
   useEffect(() => {
-    setBio(initialData.bio || '');
+    setBio(initialData.bio || "");
   }, [initialData, isOpen]);
 
   if (!isOpen) return null;
@@ -310,26 +473,67 @@ const EditAboutModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: bool
       <div className="bg-[#2b2b2b] rounded-2xl w-full max-w-lg border border-zinc-700 shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex justify-between items-center p-4 border-b border-zinc-700">
           <h2 className="text-xl font-bold text-white">Edit About</h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white transition-colors"><X size={24} /></button>
+          <button
+            onClick={onClose}
+            className="text-zinc-400 hover:text-white transition-colors"
+          >
+            <X size={24} />
+          </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">Bio</label>
-            <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={6} className="w-full bg-[#1a1a1a] border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500" placeholder="Tell us about yourself..." />
+            <label className="block text-sm font-medium text-zinc-300 mb-1">
+              Bio
+            </label>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={6}
+              className="w-full bg-[#1a1a1a] border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+              placeholder="Tell us about yourself..."
+            />
           </div>
         </form>
         <div className="p-4 border-t border-zinc-700 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors">Cancel</button>
-          <button onClick={handleSubmit} className="px-4 py-2 rounded-full font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">Save</button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 rounded-full font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          >
+            Save
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-const EditExperienceModal = ({ isOpen, onClose, experiences, onSave }: { isOpen: boolean; onClose: () => void; experiences: any[]; onSave: (data: any) => void }) => {
+const EditExperienceModal = ({
+  isOpen,
+  onClose,
+  experiences,
+  onSave,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  experiences: any[];
+  onSave: (data: any) => void;
+}) => {
   const [list, setList] = useState(experiences || []);
-  const [newExp, setNewExp] = useState({ title: '', company: '', location: '', startDate: '', endDate: '', current: false, description: '' });
+  const [newExp, setNewExp] = useState({
+    title: "",
+    company: "",
+    location: "",
+    startDate: "",
+    endDate: "",
+    current: false,
+    description: "",
+  });
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
@@ -341,7 +545,15 @@ const EditExperienceModal = ({ isOpen, onClose, experiences, onSave }: { isOpen:
   const handleAdd = () => {
     if (!newExp.title || !newExp.company) return;
     setList([...list, newExp]);
-    setNewExp({ title: '', company: '', location: '', startDate: '', endDate: '', current: false, description: '' });
+    setNewExp({
+      title: "",
+      company: "",
+      location: "",
+      startDate: "",
+      endDate: "",
+      current: false,
+      description: "",
+    });
     setIsAdding(false);
   };
 
@@ -361,56 +573,171 @@ const EditExperienceModal = ({ isOpen, onClose, experiences, onSave }: { isOpen:
       <div className="bg-[#2b2b2b] rounded-2xl w-full max-w-2xl border border-zinc-700 shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex justify-between items-center p-4 border-b border-zinc-700">
           <h2 className="text-xl font-bold text-white">Edit Experience</h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white transition-colors"><X size={24} /></button>
+          <button
+            onClick={onClose}
+            className="text-zinc-400 hover:text-white transition-colors"
+          >
+            <X size={24} />
+          </button>
         </div>
         <div className="p-6 overflow-y-auto flex-1">
           <div className="space-y-4 mb-6">
             {list.map((exp: any, i: number) => (
-              <div key={i} className="bg-[#1a1a1a] p-4 rounded-lg flex justify-between items-start">
+              <div
+                key={i}
+                className="bg-[#1a1a1a] p-4 rounded-lg flex justify-between items-start"
+              >
                 <div>
                   <h4 className="font-bold">{exp.title}</h4>
                   <p className="text-sm text-zinc-300">{exp.company}</p>
-                  <p className="text-xs text-zinc-400">{new Date(exp.startDate).toLocaleDateString()} - {exp.current ? 'Present' : exp.endDate ? new Date(exp.endDate).toLocaleDateString() : ''}</p>
+                  <p className="text-xs text-zinc-400">
+                    {new Date(exp.startDate).toLocaleDateString()} -{" "}
+                    {exp.current
+                      ? "Present"
+                      : exp.endDate
+                        ? new Date(exp.endDate).toLocaleDateString()
+                        : ""}
+                  </p>
                 </div>
-                <button onClick={() => handleRemove(i)} className="text-red-400 hover:text-red-300"><Trash2 size={18} /></button>
+                <button
+                  onClick={() => handleRemove(i)}
+                  className="text-red-400 hover:text-red-300"
+                >
+                  <Trash2 size={18} />
+                </button>
               </div>
             ))}
           </div>
 
           {isAdding ? (
             <div className="bg-[#1a1a1a] p-4 rounded-lg space-y-3 border border-zinc-600">
-              <input type="text" placeholder="Title" className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newExp.title} onChange={e => setNewExp({...newExp, title: e.target.value})} />
-              <input type="text" placeholder="Company" className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newExp.company} onChange={e => setNewExp({...newExp, company: e.target.value})} />
-              <input type="text" placeholder="Location" className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newExp.location} onChange={e => setNewExp({...newExp, location: e.target.value})} />
+              <input
+                type="text"
+                placeholder="Title"
+                className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                value={newExp.title}
+                onChange={(e) =>
+                  setNewExp({ ...newExp, title: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                placeholder="Company"
+                className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                value={newExp.company}
+                onChange={(e) =>
+                  setNewExp({ ...newExp, company: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                placeholder="Location"
+                className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                value={newExp.location}
+                onChange={(e) =>
+                  setNewExp({ ...newExp, location: e.target.value })
+                }
+              />
               <div className="flex gap-2">
-                <input type="date" className="bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newExp.startDate} onChange={e => setNewExp({...newExp, startDate: e.target.value})} />
-                <input type="date" className="bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newExp.endDate} onChange={e => setNewExp({...newExp, endDate: e.target.value})} disabled={newExp.current} />
+                <input
+                  type="date"
+                  className="bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                  value={newExp.startDate}
+                  onChange={(e) =>
+                    setNewExp({ ...newExp, startDate: e.target.value })
+                  }
+                />
+                <input
+                  type="date"
+                  className="bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                  value={newExp.endDate}
+                  onChange={(e) =>
+                    setNewExp({ ...newExp, endDate: e.target.value })
+                  }
+                  disabled={newExp.current}
+                />
               </div>
               <label className="flex items-center gap-2 text-sm text-zinc-300">
-                <input type="checkbox" checked={newExp.current} onChange={e => setNewExp({...newExp, current: e.target.checked})} /> I currently work here
+                <input
+                  type="checkbox"
+                  checked={newExp.current}
+                  onChange={(e) =>
+                    setNewExp({ ...newExp, current: e.target.checked })
+                  }
+                />{" "}
+                I currently work here
               </label>
-              <textarea placeholder="Description" className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newExp.description} onChange={e => setNewExp({...newExp, description: e.target.value})} />
+              <textarea
+                placeholder="Description"
+                className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                value={newExp.description}
+                onChange={(e) =>
+                  setNewExp({ ...newExp, description: e.target.value })
+                }
+              />
               <div className="flex gap-2 justify-end">
-                <button onClick={() => setIsAdding(false)} className="text-sm text-zinc-400">Cancel</button>
-                <button onClick={handleAdd} className="text-sm bg-indigo-600 px-3 py-1 rounded text-white">Add</button>
+                <button
+                  onClick={() => setIsAdding(false)}
+                  className="text-sm text-zinc-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAdd}
+                  className="text-sm bg-indigo-600 px-3 py-1 rounded text-white"
+                >
+                  Add
+                </button>
               </div>
             </div>
           ) : (
-            <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium"><Plus size={18} /> Add Experience</button>
+            <button
+              onClick={() => setIsAdding(true)}
+              className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium"
+            >
+              <Plus size={18} /> Add Experience
+            </button>
           )}
         </div>
         <div className="p-4 border-t border-zinc-700 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors">Cancel</button>
-          <button onClick={handleSave} className="px-4 py-2 rounded-full font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">Save Changes</button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 rounded-full font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          >
+            Save Changes
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-const EditEducationModal = ({ isOpen, onClose, education, onSave }: { isOpen: boolean; onClose: () => void; education: any[]; onSave: (data: any) => void }) => {
+const EditEducationModal = ({
+  isOpen,
+  onClose,
+  education,
+  onSave,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  education: any[];
+  onSave: (data: any) => void;
+}) => {
   const [list, setList] = useState(education || []);
-  const [newEdu, setNewEdu] = useState({ school: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '', description: '' });
+  const [newEdu, setNewEdu] = useState({
+    school: "",
+    degree: "",
+    fieldOfStudy: "",
+    startDate: "",
+    endDate: "",
+    description: "",
+  });
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
@@ -422,7 +749,14 @@ const EditEducationModal = ({ isOpen, onClose, education, onSave }: { isOpen: bo
   const handleAdd = () => {
     if (!newEdu.school || !newEdu.degree) return;
     setList([...list, newEdu]);
-    setNewEdu({ school: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '', description: '' });
+    setNewEdu({
+      school: "",
+      degree: "",
+      fieldOfStudy: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    });
     setIsAdding(false);
   };
 
@@ -442,53 +776,153 @@ const EditEducationModal = ({ isOpen, onClose, education, onSave }: { isOpen: bo
       <div className="bg-[#2b2b2b] rounded-2xl w-full max-w-2xl border border-zinc-700 shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex justify-between items-center p-4 border-b border-zinc-700">
           <h2 className="text-xl font-bold text-white">Edit Education</h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white transition-colors"><X size={24} /></button>
+          <button
+            onClick={onClose}
+            className="text-zinc-400 hover:text-white transition-colors"
+          >
+            <X size={24} />
+          </button>
         </div>
         <div className="p-6 overflow-y-auto flex-1">
           <div className="space-y-4 mb-6">
             {list.map((edu: any, i: number) => (
-              <div key={i} className="bg-[#1a1a1a] p-4 rounded-lg flex justify-between items-start">
+              <div
+                key={i}
+                className="bg-[#1a1a1a] p-4 rounded-lg flex justify-between items-start"
+              >
                 <div>
                   <h4 className="font-bold">{edu.school}</h4>
-                  <p className="text-sm text-zinc-300">{edu.degree}, {edu.fieldOfStudy}</p>
-                  <p className="text-xs text-zinc-400">{new Date(edu.startDate).getFullYear()} - {edu.endDate ? new Date(edu.endDate).getFullYear() : 'Present'}</p>
+                  <p className="text-sm text-zinc-300">
+                    {edu.degree}, {edu.fieldOfStudy}
+                  </p>
+                  <p className="text-xs text-zinc-400">
+                    {new Date(edu.startDate).getFullYear()} -{" "}
+                    {edu.endDate
+                      ? new Date(edu.endDate).getFullYear()
+                      : "Present"}
+                  </p>
                 </div>
-                <button onClick={() => handleRemove(i)} className="text-red-400 hover:text-red-300"><Trash2 size={18} /></button>
+                <button
+                  onClick={() => handleRemove(i)}
+                  className="text-red-400 hover:text-red-300"
+                >
+                  <Trash2 size={18} />
+                </button>
               </div>
             ))}
           </div>
 
           {isAdding ? (
             <div className="bg-[#1a1a1a] p-4 rounded-lg space-y-3 border border-zinc-600">
-              <input type="text" placeholder="School" className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newEdu.school} onChange={e => setNewEdu({...newEdu, school: e.target.value})} />
-              <input type="text" placeholder="Degree" className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newEdu.degree} onChange={e => setNewEdu({...newEdu, degree: e.target.value})} />
-              <input type="text" placeholder="Field of Study" className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newEdu.fieldOfStudy} onChange={e => setNewEdu({...newEdu, fieldOfStudy: e.target.value})} />
+              <input
+                type="text"
+                placeholder="School"
+                className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                value={newEdu.school}
+                onChange={(e) =>
+                  setNewEdu({ ...newEdu, school: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                placeholder="Degree"
+                className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                value={newEdu.degree}
+                onChange={(e) =>
+                  setNewEdu({ ...newEdu, degree: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                placeholder="Field of Study"
+                className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                value={newEdu.fieldOfStudy}
+                onChange={(e) =>
+                  setNewEdu({ ...newEdu, fieldOfStudy: e.target.value })
+                }
+              />
               <div className="flex gap-2">
-                <input type="date" className="bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newEdu.startDate} onChange={e => setNewEdu({...newEdu, startDate: e.target.value})} />
-                <input type="date" className="bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newEdu.endDate} onChange={e => setNewEdu({...newEdu, endDate: e.target.value})} />
+                <input
+                  type="date"
+                  className="bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                  value={newEdu.startDate}
+                  onChange={(e) =>
+                    setNewEdu({ ...newEdu, startDate: e.target.value })
+                  }
+                />
+                <input
+                  type="date"
+                  className="bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                  value={newEdu.endDate}
+                  onChange={(e) =>
+                    setNewEdu({ ...newEdu, endDate: e.target.value })
+                  }
+                />
               </div>
-              <textarea placeholder="Description" className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newEdu.description} onChange={e => setNewEdu({...newEdu, description: e.target.value})} />
+              <textarea
+                placeholder="Description"
+                className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                value={newEdu.description}
+                onChange={(e) =>
+                  setNewEdu({ ...newEdu, description: e.target.value })
+                }
+              />
               <div className="flex gap-2 justify-end">
-                <button onClick={() => setIsAdding(false)} className="text-sm text-zinc-400">Cancel</button>
-                <button onClick={handleAdd} className="text-sm bg-indigo-600 px-3 py-1 rounded text-white">Add</button>
+                <button
+                  onClick={() => setIsAdding(false)}
+                  className="text-sm text-zinc-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAdd}
+                  className="text-sm bg-indigo-600 px-3 py-1 rounded text-white"
+                >
+                  Add
+                </button>
               </div>
             </div>
           ) : (
-            <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium"><Plus size={18} /> Add Education</button>
+            <button
+              onClick={() => setIsAdding(true)}
+              className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium"
+            >
+              <Plus size={18} /> Add Education
+            </button>
           )}
         </div>
         <div className="p-4 border-t border-zinc-700 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors">Cancel</button>
-          <button onClick={handleSave} className="px-4 py-2 rounded-full font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">Save Changes</button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 rounded-full font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          >
+            Save Changes
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-const EditSkillsModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: boolean; onClose: () => void; initialData: any; onSave: (data: any) => void }) => {
+const EditSkillsModal = ({
+  isOpen,
+  onClose,
+  initialData,
+  onSave,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  initialData: any;
+  onSave: (data: any) => void;
+}) => {
   const [skills, setSkills] = useState<string[]>(initialData.skills || []);
-  const [newSkill, setNewSkill] = useState('');
+  const [newSkill, setNewSkill] = useState("");
 
   useEffect(() => {
     setSkills(initialData.skills || []);
@@ -499,12 +933,12 @@ const EditSkillsModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: boo
   const handleAdd = () => {
     if (newSkill.trim()) {
       setSkills([...skills, newSkill.trim()]);
-      setNewSkill('');
+      setNewSkill("");
     }
   };
 
   const handleRemove = (skillToRemove: string) => {
-    setSkills(skills.filter(s => s !== skillToRemove));
+    setSkills(skills.filter((s) => s !== skillToRemove));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -518,41 +952,84 @@ const EditSkillsModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: boo
       <div className="bg-[#2b2b2b] rounded-2xl w-full max-w-lg border border-zinc-700 shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex justify-between items-center p-4 border-b border-zinc-700">
           <h2 className="text-xl font-bold text-white">Edit Skills</h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white transition-colors"><X size={24} /></button>
+          <button
+            onClick={onClose}
+            className="text-zinc-400 hover:text-white transition-colors"
+          >
+            <X size={24} />
+          </button>
         </div>
         <div className="p-6 space-y-4 overflow-y-auto">
           <div className="flex gap-2">
-            <input 
-              type="text" 
-              value={newSkill} 
-              onChange={(e) => setNewSkill(e.target.value)} 
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-              className="flex-1 bg-[#1a1a1a] border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500" 
-              placeholder="Add a skill" 
+            <input
+              type="text"
+              value={newSkill}
+              onChange={(e) => setNewSkill(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+              className="flex-1 bg-[#1a1a1a] border border-zinc-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+              placeholder="Add a skill"
             />
-            <button onClick={handleAdd} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg transition-colors"><Plus size={20} /></button>
+            <button
+              onClick={handleAdd}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg transition-colors"
+            >
+              <Plus size={20} />
+            </button>
           </div>
           <div className="flex flex-wrap gap-2">
             {skills.map((skill, i) => (
-              <div key={i} className="bg-zinc-700/50 border border-zinc-600 rounded-full px-3 py-1 flex items-center gap-2">
+              <div
+                key={i}
+                className="bg-zinc-700/50 border border-zinc-600 rounded-full px-3 py-1 flex items-center gap-2"
+              >
                 <span className="text-sm text-white">{skill}</span>
-                <button onClick={() => handleRemove(skill)} className="text-zinc-400 hover:text-white"><X size={14} /></button>
+                <button
+                  onClick={() => handleRemove(skill)}
+                  className="text-zinc-400 hover:text-white"
+                >
+                  <X size={14} />
+                </button>
               </div>
             ))}
           </div>
         </div>
         <div className="p-4 border-t border-zinc-700 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors">Cancel</button>
-          <button onClick={handleSubmit} className="px-4 py-2 rounded-full font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">Save</button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 rounded-full font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          >
+            Save
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-const EditCertificatesModal = ({ isOpen, onClose, certificates, onSave }: { isOpen: boolean; onClose: () => void; certificates: any[]; onSave: (data: any) => void }) => {
+const EditCertificatesModal = ({
+  isOpen,
+  onClose,
+  certificates,
+  onSave,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  certificates: any[];
+  onSave: (data: any) => void;
+}) => {
   const [list, setList] = useState(certificates || []);
-  const [newCert, setNewCert] = useState({ name: '', organization: '', issueDate: '', url: '' });
+  const [newCert, setNewCert] = useState({
+    name: "",
+    organization: "",
+    issueDate: "",
+    url: "",
+  });
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
@@ -564,7 +1041,7 @@ const EditCertificatesModal = ({ isOpen, onClose, certificates, onSave }: { isOp
   const handleAdd = () => {
     if (!newCert.name || !newCert.organization) return;
     setList([...list, newCert]);
-    setNewCert({ name: '', organization: '', issueDate: '', url: '' });
+    setNewCert({ name: "", organization: "", issueDate: "", url: "" });
     setIsAdding(false);
   };
 
@@ -584,57 +1061,150 @@ const EditCertificatesModal = ({ isOpen, onClose, certificates, onSave }: { isOp
       <div className="bg-[#2b2b2b] rounded-2xl w-full max-w-2xl border border-zinc-700 shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex justify-between items-center p-4 border-b border-zinc-700">
           <h2 className="text-xl font-bold text-white">Edit Certificates</h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white transition-colors"><X size={24} /></button>
+          <button
+            onClick={onClose}
+            className="text-zinc-400 hover:text-white transition-colors"
+          >
+            <X size={24} />
+          </button>
         </div>
         <div className="p-6 overflow-y-auto flex-1">
           <div className="space-y-4 mb-6">
             {list.map((cert: any, i: number) => (
-              <div key={i} className="bg-[#1a1a1a] p-4 rounded-lg flex justify-between items-start">
+              <div
+                key={i}
+                className="bg-[#1a1a1a] p-4 rounded-lg flex justify-between items-start"
+              >
                 <div>
                   <h4 className="font-bold">{cert.name}</h4>
                   <p className="text-sm text-zinc-300">{cert.organization}</p>
-                  {cert.issueDate && <p className="text-xs text-zinc-400">Issued {new Date(cert.issueDate).toLocaleDateString()}</p>}
+                  {cert.issueDate && (
+                    <p className="text-xs text-zinc-400">
+                      Issued {new Date(cert.issueDate).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
-                <button onClick={() => handleRemove(i)} className="text-red-400 hover:text-red-300"><Trash2 size={18} /></button>
+                <button
+                  onClick={() => handleRemove(i)}
+                  className="text-red-400 hover:text-red-300"
+                >
+                  <Trash2 size={18} />
+                </button>
               </div>
             ))}
           </div>
 
           {isAdding ? (
             <div className="bg-[#1a1a1a] p-4 rounded-lg space-y-3 border border-zinc-600">
-              <input type="text" placeholder="Certificate Name" className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newCert.name} onChange={e => setNewCert({...newCert, name: e.target.value})} />
-              <input type="text" placeholder="Issuing Organization" className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newCert.organization} onChange={e => setNewCert({...newCert, organization: e.target.value})} />
-              <input type="date" className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newCert.issueDate} onChange={e => setNewCert({...newCert, issueDate: e.target.value})} />
-              <input type="text" placeholder="Credential URL" className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600" value={newCert.url} onChange={e => setNewCert({...newCert, url: e.target.value})} />
+              <input
+                type="text"
+                placeholder="Certificate Name"
+                className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                value={newCert.name}
+                onChange={(e) =>
+                  setNewCert({ ...newCert, name: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                placeholder="Issuing Organization"
+                className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                value={newCert.organization}
+                onChange={(e) =>
+                  setNewCert({ ...newCert, organization: e.target.value })
+                }
+              />
+              <input
+                type="date"
+                className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                value={newCert.issueDate}
+                onChange={(e) =>
+                  setNewCert({ ...newCert, issueDate: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                placeholder="Credential URL"
+                className="w-full bg-[#2b2b2b] p-2 rounded text-white border border-zinc-600"
+                value={newCert.url}
+                onChange={(e) =>
+                  setNewCert({ ...newCert, url: e.target.value })
+                }
+              />
               <div className="flex gap-2 justify-end">
-                <button onClick={() => setIsAdding(false)} className="text-sm text-zinc-400">Cancel</button>
-                <button onClick={handleAdd} className="text-sm bg-indigo-600 px-3 py-1 rounded text-white">Add</button>
+                <button
+                  onClick={() => setIsAdding(false)}
+                  className="text-sm text-zinc-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAdd}
+                  className="text-sm bg-indigo-600 px-3 py-1 rounded text-white"
+                >
+                  Add
+                </button>
               </div>
             </div>
           ) : (
-            <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium"><Plus size={18} /> Add Certificate</button>
+            <button
+              onClick={() => setIsAdding(true)}
+              className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium"
+            >
+              <Plus size={18} /> Add Certificate
+            </button>
           )}
         </div>
         <div className="p-4 border-t border-zinc-700 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors">Cancel</button>
-          <button onClick={handleSave} className="px-4 py-2 rounded-full font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">Save Changes</button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 rounded-full font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          >
+            Save Changes
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: () => void; onConfirm: () => void }) => {
+const DeleteConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-[#2b2b2b] rounded-2xl w-full max-w-md border border-zinc-700 shadow-2xl p-6">
         <h3 className="text-xl font-bold text-white mb-2">Delete Post?</h3>
-        <p className="text-zinc-400 mb-6">Are you sure you want to delete this post?</p>
+        <p className="text-zinc-400 mb-6">
+          Are you sure you want to delete this post?
+        </p>
         <div className="flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors">Cancel</button>
-          <button onClick={onConfirm} className="px-4 py-2 rounded-full font-medium bg-red-600 text-white hover:bg-red-700 transition-colors">Delete</button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-full font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-full font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+          >
+            Delete
+          </button>
         </div>
       </div>
     </div>
@@ -659,10 +1229,17 @@ const LinkedInProfilePage = () => {
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
   const [isCertificatesModalOpen, setIsCertificatesModalOpen] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [activeMenuPostId, setActiveMenuPostId] = useState<string | number | null>(null);
+  const [activeMenuPostId, setActiveMenuPostId] = useState<
+    string | number | null
+  >(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [postToDelete, setPostToDelete] = useState<string | number | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [postToDelete, setPostToDelete] = useState<string | number | null>(
+    null,
+  );
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
@@ -689,7 +1266,7 @@ const LinkedInProfilePage = () => {
             } catch (e) {
               // Ignore JSON parse error for error responses
             }
-            throw new Error(errorData.message || 'Failed to fetch profile');
+            throw new Error(errorData.message || "Failed to fetch profile");
           }
           const { data } = await res.json();
           setProfile(data);
@@ -710,10 +1287,16 @@ const LinkedInProfilePage = () => {
 
       const fetchPosts = async () => {
         try {
-          const res = await fetch(`/api/auth/ProjectOrResearch?userid=${username}`);
+          const res = await fetch(
+            `/api/auth/ProjectOrResearch?userid=${username}`,
+          );
           if (res.ok) {
             const data = await res.json();
-            const sortedPosts = (data.data || []).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            const sortedPosts = (data.data || []).sort(
+              (a: any, b: any) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+            );
             const formattedPosts = sortedPosts.map((post: any) => ({
               id: post._id,
               author: {
@@ -749,7 +1332,8 @@ const LinkedInProfilePage = () => {
       author: {
         name: profile.user.fullName,
         username: profile.user.username,
-        avatar: profile.profilePicture || profile.user.profileImage || "/user.png",
+        avatar:
+          profile.profilePicture || profile.user.profileImage || "/user.png",
         headline: profile.headline || "",
       },
       timestamp: "Just now",
@@ -763,45 +1347,50 @@ const LinkedInProfilePage = () => {
 
   const handleCreateProject = async (formData: FormData) => {
     // This function sends the project data to the backend API.
-    const res = await fetch('/api/auth/ProjectOrResearch', {
-        method: 'POST',
-        body: formData,
+    const res = await fetch("/api/auth/ProjectOrResearch", {
+      method: "POST",
+      body: formData,
     });
 
     if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Failed to create project.');
+      const errorData = await res.json();
+      throw new Error(errorData.message || "Failed to create project.");
     }
 
     // TODO: Re-fetch projects or update state here to show the new project
-    alert('Project created successfully!');
+    alert("Project created successfully!");
     // You might want to trigger a refresh of the projects list here.
   };
 
-  const handleInteraction = async (postId: string, action: 'like' | 'interested') => {
+  const handleInteraction = async (
+    postId: string,
+    action: "like" | "interested",
+  ) => {
     if (!session?.user?.username) return;
     const userIdentifier = session.user.username;
 
-    setPosts(prevPosts => prevPosts.map(post => {
-      if (post.id === postId) {
-        const list = action === 'like' ? post.likes : (post.interested || []);
-        const isActive = list.includes(userIdentifier);
-        const newList = isActive 
-          ? list.filter((u: string) => u !== userIdentifier)
-          : [...list, userIdentifier];
-        
-        return {
-          ...post,
-          [action === 'like' ? 'likes' : 'interested']: newList
-        };
-      }
-      return post;
-    }));
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => {
+        if (post.id === postId) {
+          const list = action === "like" ? post.likes : post.interested || [];
+          const isActive = list.includes(userIdentifier);
+          const newList = isActive
+            ? list.filter((u: string) => u !== userIdentifier)
+            : [...list, userIdentifier];
+
+          return {
+            ...post,
+            [action === "like" ? "likes" : "interested"]: newList,
+          };
+        }
+        return post;
+      }),
+    );
 
     try {
-      await fetch('/api/auth/ProjectOrResearch', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("/api/auth/ProjectOrResearch", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ postId, action, username: userIdentifier }),
       });
     } catch (error) {
@@ -818,18 +1407,23 @@ const LinkedInProfilePage = () => {
   const confirmDelete = async () => {
     if (!postToDelete) return;
     try {
-      const res = await fetch(`/api/auth/ProjectOrResearch?postId=${postToDelete}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(
+        `/api/auth/ProjectOrResearch?postId=${postToDelete}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (res.ok) {
-        setPosts(prevPosts => prevPosts.filter(post => post.id !== postToDelete));
-        setToast({ message: 'Post deleted successfully', type: 'success' });
+        setPosts((prevPosts) =>
+          prevPosts.filter((post) => post.id !== postToDelete),
+        );
+        setToast({ message: "Post deleted successfully", type: "success" });
       } else {
-        throw new Error('Failed to delete');
+        throw new Error("Failed to delete");
       }
     } catch (error) {
       console.error("Failed to delete post", error);
-      setToast({ message: 'Failed to delete post', type: 'error' });
+      setToast({ message: "Failed to delete post", type: "error" });
     } finally {
       setIsDeleteModalOpen(false);
       setPostToDelete(null);
@@ -844,12 +1438,12 @@ const LinkedInProfilePage = () => {
 
     // Optimistic UI update
     setIsFollowing(!originalIsFollowing);
-    setFollowersCount(prev => !originalIsFollowing ? prev + 1 : prev - 1);
+    setFollowersCount((prev) => (!originalIsFollowing ? prev + 1 : prev - 1));
 
     try {
-      const res = await fetch('/api/profile/follow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/profile/follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ targetUserId: profile.user._id }),
       });
 
@@ -858,13 +1452,19 @@ const LinkedInProfilePage = () => {
         setIsFollowing(originalIsFollowing);
         setFollowersCount(originalFollowersCount);
         const errorData = await res.json();
-        setToast({ message: errorData.error || 'Failed to update follow status.', type: 'error' });
+        setToast({
+          message: errorData.error || "Failed to update follow status.",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("Failed to follow/unfollow user", error);
       setIsFollowing(originalIsFollowing);
       setFollowersCount(originalFollowersCount);
-      setToast({ message: "An error occurred while updating follow status.", type: 'error' });
+      setToast({
+        message: "An error occurred while updating follow status.",
+        type: "error",
+      });
     }
   };
 
@@ -872,21 +1472,25 @@ const LinkedInProfilePage = () => {
     if (!profile) return;
 
     try {
-      const res = await fetch('/api/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sectionUpdates),
       });
 
-      if (!res.ok) throw new Error('Failed to update profile');
+      if (!res.ok) throw new Error("Failed to update profile");
 
       const { data } = await res.json();
-      
+
       // Update local state to reflect changes immediately
-      setProfile(prev => prev ? {
-        ...prev,
-        ...data
-      } : null);
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...data,
+            }
+          : null,
+      );
     } catch (err) {
       console.error(err);
     }
@@ -932,15 +1536,30 @@ const LinkedInProfilePage = () => {
     );
   }
 
-  const { user, headline, bio, location, profilePicture, links, skills, education, experience, certificates } = profile;
+  const {
+    user,
+    headline,
+    bio,
+    location,
+    profilePicture,
+    links,
+    skills,
+    education,
+    experience,
+    certificates,
+  } = profile;
 
-  const latestExperience = experience && experience.length > 0 ? experience.find(e => e.current) || experience[0] : null;
-  const latestEducation = education && education.length > 0 ? education[0] : null;
+  const latestExperience =
+    experience && experience.length > 0
+      ? experience.find((e) => e.current) || experience[0]
+      : null;
+  const latestEducation =
+    education && education.length > 0 ? education[0] : null;
 
   const socialLinks = {
-    linkedin: links.find(l => l.title.toLowerCase() === 'linkedin')?.url,
-    github: links.find(l => l.title.toLowerCase() === 'github')?.url,
-    twitter: links.find(l => l.title.toLowerCase() === 'twitter')?.url,
+    linkedin: links.find((l) => l.title.toLowerCase() === "linkedin")?.url,
+    github: links.find((l) => l.title.toLowerCase() === "github")?.url,
+    twitter: links.find((l) => l.title.toLowerCase() === "twitter")?.url,
   };
 
   const isOwnProfile = session?.user?.email === user.email;
@@ -967,7 +1586,13 @@ const LinkedInProfilePage = () => {
           {/* Profile Card */}
           <div className="bg-[#2b2b2b] rounded-2xl overflow-hidden shadow-lg border border-zinc-700">
             {/* Cover Photo */}
-            <div className="h-48 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2070&auto=format&fit=crop')" }}></div>
+            <div
+              className="h-48 bg-cover bg-center"
+              style={{
+                backgroundImage:
+                  "url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2070&auto=format&fit=crop')",
+              }}
+            ></div>
 
             <div className="p-6 relative">
               {/* Profile Picture */}
@@ -985,7 +1610,13 @@ const LinkedInProfilePage = () => {
                     >
                       <Camera size={24} className="text-white" />
                     </button>
-                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
                   </>
                 )}
               </div>
@@ -994,9 +1625,14 @@ const LinkedInProfilePage = () => {
                 <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h1 className="text-3xl font-bold truncate" title={user.fullName}>{user.fullName}</h1>
+                      <h1
+                        className="text-3xl font-bold truncate"
+                        title={user.fullName}
+                      >
+                        {user.fullName}
+                      </h1>
                       {isOwnProfile && (
-                        <button 
+                        <button
                           onClick={() => setIsIntroModalOpen(true)}
                           className="p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
                         >
@@ -1005,23 +1641,23 @@ const LinkedInProfilePage = () => {
                       )}
                     </div>
                     <p className="text-zinc-300 mt-1 text-lg">{headline}</p>
-                    
+
                     <div className="flex flex-wrap gap-y-1 gap-x-3 mt-2 text-sm text-zinc-400">
-                        {location && (
+                      {location && (
                         <span className="flex items-center gap-1">
-                            <MapPin size={16} /> {location}
+                          <MapPin size={16} /> {location}
                         </span>
-                        )}
-                        {user.mobile && (
+                      )}
+                      {user.mobile && (
                         <span className="flex items-center gap-1">
-                            <Phone size={16} /> {user.mobile}
+                          <Phone size={16} /> {user.mobile}
                         </span>
-                        )}
-                         {user.email && (
+                      )}
+                      {user.email && (
                         <span className="flex items-center gap-1">
-                            <Send size={16} /> {user.email}
+                          <Send size={16} /> {user.email}
                         </span>
-                        )}
+                      )}
                     </div>
 
                     {/* {user.role && (
@@ -1041,36 +1677,76 @@ const LinkedInProfilePage = () => {
                     {skills && skills.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-3">
                         {skills.slice(0, 5).map((skill, index) => (
-                          <span key={index} className="text-xs bg-zinc-700/50 text-zinc-300 px-2 py-1 rounded-md border border-zinc-600/50">
+                          <span
+                            key={index}
+                            className="text-xs bg-zinc-700/50 text-zinc-300 px-2 py-1 rounded-md border border-zinc-600/50"
+                          >
                             {skill}
                           </span>
                         ))}
                         {skills.length > 5 && (
-                          <span className="text-xs text-zinc-500 py-1 px-1">+{skills.length - 5} more</span>
+                          <span className="text-xs text-zinc-500 py-1 px-1">
+                            +{skills.length - 5} more
+                          </span>
                         )}
                       </div>
                     )}
 
                     <div className="flex items-center gap-3 mt-3">
-                        {socialLinks.linkedin && <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-[#0077b5] transition-colors"><Linkedin size={20} /></a>}
-                        {socialLinks.github && <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white transition-colors"><Github size={20} /></a>}
-                        {socialLinks.twitter && <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-[#1DA1F2] transition-colors"><Twitter size={20} /></a>}
+                      {socialLinks.linkedin && (
+                        <a
+                          href={socialLinks.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-zinc-400 hover:text-[#0077b5] transition-colors"
+                        >
+                          <Linkedin size={20} />
+                        </a>
+                      )}
+                      {socialLinks.github && (
+                        <a
+                          href={socialLinks.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-zinc-400 hover:text-white transition-colors"
+                        >
+                          <Github size={20} />
+                        </a>
+                      )}
+                      {socialLinks.twitter && (
+                        <a
+                          href={socialLinks.twitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-zinc-400 hover:text-[#1DA1F2] transition-colors"
+                        >
+                          <Twitter size={20} />
+                        </a>
+                      )}
                     </div>
                   </div>
 
                   <div className="hidden md:flex flex-col gap-2 min-w-55">
-                      {latestExperience && (
-                          <div className="flex items-center gap-2 group cursor-pointer">
-                              <div className="w-8 h-8 bg-zinc-700 rounded flex items-center justify-center text-white shrink-0"><Briefcase size={14} /></div>
-                              <span className="text-sm font-medium text-zinc-200 group-hover:text-indigo-400 group-hover:underline line-clamp-2">{latestExperience.company}</span>
-                          </div>
-                      )}
-                      {latestEducation && (
-                          <div className="flex items-center gap-2 group cursor-pointer">
-                              <div className="w-8 h-8 bg-zinc-700 rounded flex items-center justify-center text-white shrink-0"><GraduationCap size={14} /></div>
-                              <span className="text-sm font-medium text-zinc-200 group-hover:text-indigo-400 group-hover:underline line-clamp-2">{latestEducation.school}</span>
-                          </div>
-                      )}
+                    {latestExperience && (
+                      <div className="flex items-center gap-2 group cursor-pointer">
+                        <div className="w-8 h-8 bg-zinc-700 rounded flex items-center justify-center text-white shrink-0">
+                          <Briefcase size={14} />
+                        </div>
+                        <span className="text-sm font-medium text-zinc-200 group-hover:text-indigo-400 group-hover:underline line-clamp-2">
+                          {latestExperience.company}
+                        </span>
+                      </div>
+                    )}
+                    {latestEducation && (
+                      <div className="flex items-center gap-2 group cursor-pointer">
+                        <div className="w-8 h-8 bg-zinc-700 rounded flex items-center justify-center text-white shrink-0">
+                          <GraduationCap size={14} />
+                        </div>
+                        <span className="text-sm font-medium text-zinc-200 group-hover:text-indigo-400 group-hover:underline line-clamp-2">
+                          {latestEducation.school}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1085,9 +1761,12 @@ const LinkedInProfilePage = () => {
                     </button>
                   ) : (
                     <>
-                      <button onClick={handleFollow} className={`font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-colors ${isFollowing ? 'bg-zinc-700 hover:bg-zinc-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}>
+                      <button
+                        onClick={handleFollow}
+                        className={`font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-colors ${isFollowing ? "bg-zinc-700 hover:bg-zinc-600 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}
+                      >
                         {isFollowing ? <Users size={18} /> : <Plus size={18} />}
-                        {isFollowing ? 'Following' : 'Follow'}
+                        {isFollowing ? "Following" : "Follow"}
                       </button>
                       <button className="bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-colors">
                         <Send size={16} /> Message
@@ -1130,10 +1809,14 @@ const LinkedInProfilePage = () => {
             }}
           />
 
-          <EditIntroModal 
-            isOpen={isIntroModalOpen} 
-            onClose={() => setIsIntroModalOpen(false)} 
-            initialData={{ headline: profile.headline, location: profile.location, mobile: profile.user.mobile }} 
+          <EditIntroModal
+            isOpen={isIntroModalOpen}
+            onClose={() => setIsIntroModalOpen(false)}
+            initialData={{
+              headline: profile.headline,
+              location: profile.location,
+              mobile: profile.user.mobile,
+            }}
             onSave={handleSaveProfile}
           />
           <DeleteConfirmationModal
@@ -1144,35 +1827,62 @@ const LinkedInProfilePage = () => {
 
           {/* My Posts Section */}
           <div className="bg-[#2b2b2b] rounded-2xl shadow-lg border border-zinc-700">
-            <h2 className="text-2xl font-bold p-6 pb-4">Projects & Researches</h2>
+            <h2 className="text-2xl font-bold p-6 pb-4">
+              Projects & Researches
+            </h2>
             <div className="divide-y divide-zinc-700/50">
               {(showAllPosts ? posts : posts.slice(0, 1)).map((post) => (
                 <div key={post.id} className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <Link href={`/user/${post.author.username || profile?.user?.username}`}>
+                      <Link
+                        href={`/user/${post.author.username || profile?.user?.username}`}
+                      >
                         <img
                           className="w-12 h-12 rounded-full object-cover cursor-pointer"
-                          src={post.author.avatar || profile?.profilePicture || profile?.user?.profileImage || "user.png"}
+                          src={
+                            post.author.avatar ||
+                            profile?.profilePicture ||
+                            profile?.user?.profileImage ||
+                            "user.png"
+                          }
                           alt={`${post.author.name || profile?.user?.fullName || "User"}'s avatar`}
                         />
                       </Link>
                       <div>
                         <div className="flex items-center gap-2">
-                          <Link href={`/user/${post.author.username || profile?.user?.username}`} className="hover:underline">
-                            <p className="font-bold text-white">{post.author.name || profile?.user?.fullName || "Unknown"}</p>
+                          <Link
+                            href={`/user/${post.author.username || profile?.user?.username}`}
+                            className="hover:underline"
+                          >
+                            <p className="font-bold text-white">
+                              {post.author.name ||
+                                profile?.user?.fullName ||
+                                "Unknown"}
+                            </p>
                           </Link>
-                          {(post.author.username || profile?.user?.username) && <span className="text-xs text-zinc-500">@{post.author.username || profile?.user?.username}</span>}
+                          {(post.author.username ||
+                            profile?.user?.username) && (
+                            <span className="text-xs text-zinc-500">
+                              @{post.author.username || profile?.user?.username}
+                            </span>
+                          )}
                         </div>
-                        <p className="text-sm text-zinc-400">{post.author.headline || profile?.headline}</p>
-                        <p className="text-xs text-zinc-500 mt-1">{post.timestamp}</p>
+                        <p className="text-sm text-zinc-400">
+                          {post.author.headline || profile?.headline}
+                        </p>
+                        <p className="text-xs text-zinc-500 mt-1">
+                          {post.timestamp}
+                        </p>
                       </div>
                     </div>
                     <div className="relative">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setActiveMenuPostId(activeMenuPostId === post.id ? null : post.id);
+                          setActiveMenuPostId(
+                            activeMenuPostId === post.id ? null : post.id,
+                          );
                         }}
                         className="text-zinc-400 hover:text-white p-2 hover:bg-zinc-800 rounded-full transition-colors"
                       >
@@ -1204,38 +1914,60 @@ const LinkedInProfilePage = () => {
                       )}
                     </div>
                   </div>
-                  <p className="mt-4 text-zinc-300 whitespace-pre-wrap">{post.content}</p>
+                  <p className="mt-4 text-zinc-300 whitespace-pre-wrap">
+                    {post.content}
+                  </p>
                   {post.coverImage && (
                     <div className="mt-4 rounded-xl overflow-hidden border border-zinc-700">
                       <img
                         src={post.coverImage}
                         alt="Post content"
-                        className="w-full h-auto object-cover max-h-[500px]"
+                        className="w-full h-auto object-cover max-h-500px"
                       />
                     </div>
                   )}
                   <div className="mt-4 flex items-center justify-between text-zinc-400 text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <ThumbsUp size={14} className="text-green-500" />
+                      <span>{post.likes.length}</span>
+                    </div>
+                    {post.interested && post.interested.length > 0 && (
                       <div className="flex items-center gap-1.5">
-                          <ThumbsUp size={14} className="text-green-500" />
-                          <span>{post.likes.length}</span>
+                        <Star size={14} className="text-yellow-500" />
+                        <span>{post.interested.length} interested</span>
                       </div>
-                      {post.interested && post.interested.length > 0 && (
-                        <div className="flex items-center gap-1.5">
-                            <Star size={14} className="text-yellow-500" />
-                            <span>{post.interested.length} interested</span>
-                        </div>
-                      )}
-                      <span>{post.comments} comments</span>
+                    )}
+                    <span>{post.comments} comments</span>
                   </div>
                   <div className="mt-4 pt-3 border-t border-zinc-700 flex gap-1 md:gap-2">
-                    <button onClick={() => handleInteraction(post.id, 'like')} className={`flex items-center gap-1 md:gap-2 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm ${post.likes.includes(session?.user?.username) ? 'text-blue-400 bg-blue-500/10' : 'text-zinc-300 hover:bg-zinc-700'}`}>
-                      <ThumbsUp className={`w-4 h-4 md:w-5 md:h-5 ${post.likes.includes(session?.user?.username) ? 'fill-current' : ''}`} /> Like
+                    <button
+                      onClick={() => handleInteraction(post.id, "like")}
+                      className={`flex items-center gap-1 md:gap-2 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm ${post.likes.includes(session?.user?.username) ? "text-blue-400 bg-blue-500/10" : "text-zinc-300 hover:bg-zinc-700"}`}
+                    >
+                      <ThumbsUp
+                        className={`w-4 h-4 md:w-5 md:h-5 ${post.likes.includes(session?.user?.username) ? "fill-current" : ""}`}
+                      />{" "}
+                      Like
                     </button>
-                    <button onClick={() => handleInteraction(post.id, 'interested')} className={`flex items-center gap-1 md:gap-2 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm ${post.interested?.includes(session?.user?.username) ? 'text-yellow-400 bg-yellow-500/10' : 'text-zinc-300 hover:bg-zinc-700'}`}>
-                      <Star className={`w-4 h-4 md:w-5 md:h-5 ${post.interested?.includes(session?.user?.username) ? 'fill-current' : ''}`} /> Interested
+                    <button
+                      onClick={() => handleInteraction(post.id, "interested")}
+                      className={`flex items-center gap-1 md:gap-2 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm ${post.interested?.includes(session?.user?.username) ? "text-yellow-400 bg-yellow-500/10" : "text-zinc-300 hover:bg-zinc-700"}`}
+                    >
+                      <Star
+                        className={`w-4 h-4 md:w-5 md:h-5 ${post.interested?.includes(session?.user?.username) ? "fill-current" : ""}`}
+                      />{" "}
+                      Interested
                     </button>
-                    <button onClick={() => router.push(`/user/${username}/post/${post.id}?tab=comments`)} className="flex items-center gap-1 md:gap-2 text-zinc-300 hover:bg-zinc-700 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm">
-                      <MessageSquare className="w-4 h-4 md:w-5 md:h-5" /> Comment
+                    <button
+                      onClick={() =>
+                        router.push(
+                          `/user/${username}/post/${post.id}?tab=comments`,
+                        )
+                      }
+                      className="flex items-center gap-1 md:gap-2 text-zinc-300 hover:bg-zinc-700 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm"
+                    >
+                      <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />{" "}
+                      Comment
                     </button>
                     <button className="flex items-center gap-1 md:gap-2 text-zinc-300 hover:bg-zinc-700 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm">
                       <Share2 className="w-4 h-4 md:w-5 md:h-5" /> Share
@@ -1246,7 +1978,10 @@ const LinkedInProfilePage = () => {
             </div>
             {posts.length > 1 && !showAllPosts && (
               <div className="border-t border-zinc-700/50 p-4 text-center">
-                <button onClick={() => setShowAllPosts(true)} className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
+                <button
+                  onClick={() => setShowAllPosts(true)}
+                  className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
                   View all posts
                 </button>
               </div>
@@ -1258,13 +1993,23 @@ const LinkedInProfilePage = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">About</h2>
               {isOwnProfile && (
-                <button onClick={() => setIsAboutModalOpen(true)} className="p-2 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-white transition-colors">
+                <button
+                  onClick={() => setIsAboutModalOpen(true)}
+                  className="p-2 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-white transition-colors"
+                >
                   <Pencil size={20} />
                 </button>
               )}
             </div>
-            <p className="text-zinc-300 leading-relaxed">{bio || 'No bio available.'}</p>
-            <EditAboutModal isOpen={isAboutModalOpen} onClose={() => setIsAboutModalOpen(false)} initialData={{ bio }} onSave={handleSaveProfile} />
+            <p className="text-zinc-300 leading-relaxed">
+              {bio || "No bio available."}
+            </p>
+            <EditAboutModal
+              isOpen={isAboutModalOpen}
+              onClose={() => setIsAboutModalOpen(false)}
+              initialData={{ bio }}
+              onSave={handleSaveProfile}
+            />
           </div>
 
           {/* Experience Section */}
@@ -1272,7 +2017,10 @@ const LinkedInProfilePage = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Experience</h2>
               {isOwnProfile && (
-                <button onClick={() => setIsExperienceModalOpen(true)} className="p-2 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-white transition-colors">
+                <button
+                  onClick={() => setIsExperienceModalOpen(true)}
+                  className="p-2 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-white transition-colors"
+                >
                   <Pencil size={20} />
                 </button>
               )}
@@ -1287,15 +2035,38 @@ const LinkedInProfilePage = () => {
                     <h3 className="text-lg font-bold">{exp.title}</h3>
                     <p className="text-zinc-300">{exp.company}</p>
                     <p className="text-zinc-400 text-sm">
-                      {new Date(exp.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - {exp.current ? 'Present' : exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Present'}
+                      {new Date(exp.startDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })}{" "}
+                      -{" "}
+                      {exp.current
+                        ? "Present"
+                        : exp.endDate
+                          ? new Date(exp.endDate).toLocaleDateString("en-US", {
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "Present"}
                     </p>
-                    {exp.location && <p className="text-zinc-400 text-sm mt-1">{exp.location}</p>}
+                    {exp.location && (
+                      <p className="text-zinc-400 text-sm mt-1">
+                        {exp.location}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
-              {experience?.length === 0 && <p className="text-zinc-400">No experience listed.</p>}
+              {experience?.length === 0 && (
+                <p className="text-zinc-400">No experience listed.</p>
+              )}
             </div>
-            <EditExperienceModal isOpen={isExperienceModalOpen} onClose={() => setIsExperienceModalOpen(false)} experiences={experience} onSave={handleSaveProfile} />
+            <EditExperienceModal
+              isOpen={isExperienceModalOpen}
+              onClose={() => setIsExperienceModalOpen(false)}
+              experiences={experience}
+              onSave={handleSaveProfile}
+            />
           </div>
 
           {/* Education Section */}
@@ -1303,7 +2074,10 @@ const LinkedInProfilePage = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Education</h2>
               {isOwnProfile && (
-                <button onClick={() => setIsEducationModalOpen(true)} className="p-2 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-white transition-colors">
+                <button
+                  onClick={() => setIsEducationModalOpen(true)}
+                  className="p-2 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-white transition-colors"
+                >
                   <Pencil size={20} />
                 </button>
               )}
@@ -1315,15 +2089,28 @@ const LinkedInProfilePage = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold">{edu.school}</h3>
-                  <p className="text-zinc-300">{edu.degree}{edu.fieldOfStudy && `, ${edu.fieldOfStudy}`}</p>
+                  <p className="text-zinc-300">
+                    {edu.degree}
+                    {edu.fieldOfStudy && `, ${edu.fieldOfStudy}`}
+                  </p>
                   <p className="text-zinc-400 text-sm">
-                    {new Date(edu.startDate).getFullYear()} - {edu.endDate ? new Date(edu.endDate).getFullYear() : 'Present'}
+                    {new Date(edu.startDate).getFullYear()} -{" "}
+                    {edu.endDate
+                      ? new Date(edu.endDate).getFullYear()
+                      : "Present"}
                   </p>
                 </div>
               </div>
             ))}
-            {education?.length === 0 && <p className="text-zinc-400">No education listed.</p>}
-            <EditEducationModal isOpen={isEducationModalOpen} onClose={() => setIsEducationModalOpen(false)} education={education} onSave={handleSaveProfile} />
+            {education?.length === 0 && (
+              <p className="text-zinc-400">No education listed.</p>
+            )}
+            <EditEducationModal
+              isOpen={isEducationModalOpen}
+              onClose={() => setIsEducationModalOpen(false)}
+              education={education}
+              onSave={handleSaveProfile}
+            />
           </div>
 
           {/* Certificates Section */}
@@ -1331,7 +2118,10 @@ const LinkedInProfilePage = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Certificates</h2>
               {isOwnProfile && (
-                <button onClick={() => setIsCertificatesModalOpen(true)} className="p-2 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-white transition-colors">
+                <button
+                  onClick={() => setIsCertificatesModalOpen(true)}
+                  className="p-2 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-white transition-colors"
+                >
                   <Pencil size={20} />
                 </button>
               )}
@@ -1344,12 +2134,27 @@ const LinkedInProfilePage = () => {
                 <div>
                   <h3 className="text-lg font-bold">{cert.name}</h3>
                   <p className="text-zinc-300">{cert.organization}</p>
-                  {cert.issueDate && <p className="text-zinc-400 text-sm">Issued {new Date(cert.issueDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>}
+                  {cert.issueDate && (
+                    <p className="text-zinc-400 text-sm">
+                      Issued{" "}
+                      {new Date(cert.issueDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
-            {certificates?.length === 0 && <p className="text-zinc-400">No certificates listed.</p>}
-            <EditCertificatesModal isOpen={isCertificatesModalOpen} onClose={() => setIsCertificatesModalOpen(false)} certificates={certificates} onSave={handleSaveProfile} />
+            {certificates?.length === 0 && (
+              <p className="text-zinc-400">No certificates listed.</p>
+            )}
+            <EditCertificatesModal
+              isOpen={isCertificatesModalOpen}
+              onClose={() => setIsCertificatesModalOpen(false)}
+              certificates={certificates}
+              onSave={handleSaveProfile}
+            />
           </div>
 
           {/* Skills Section */}
@@ -1357,7 +2162,10 @@ const LinkedInProfilePage = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Skills</h2>
               {isOwnProfile && (
-                <button onClick={() => setIsSkillsModalOpen(true)} className="p-2 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-white transition-colors">
+                <button
+                  onClick={() => setIsSkillsModalOpen(true)}
+                  className="p-2 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-white transition-colors"
+                >
                   <Pencil size={20} />
                 </button>
               )}
@@ -1366,9 +2174,16 @@ const LinkedInProfilePage = () => {
               {skills?.map((skill, i) => (
                 <SkillBadge key={i} name={skill} />
               ))}
-              {skills?.length === 0 && <p className="text-zinc-400">No skills listed.</p>}
+              {skills?.length === 0 && (
+                <p className="text-zinc-400">No skills listed.</p>
+              )}
             </div>
-            <EditSkillsModal isOpen={isSkillsModalOpen} onClose={() => setIsSkillsModalOpen(false)} initialData={{ skills }} onSave={handleSaveProfile} />
+            <EditSkillsModal
+              isOpen={isSkillsModalOpen}
+              onClose={() => setIsSkillsModalOpen(false)}
+              initialData={{ skills }}
+              onSave={handleSaveProfile}
+            />
           </div>
         </div>
 
@@ -1378,11 +2193,16 @@ const LinkedInProfilePage = () => {
         </div>
       </div>
       {activeMenuPostId !== null && (
-        <div className="fixed inset-0 z-0" onClick={() => setActiveMenuPostId(null)} />
+        <div
+          className="fixed inset-0 z-0"
+          onClick={() => setActiveMenuPostId(null)}
+        />
       )}
       {toast && (
-        <div className={`fixed bottom-8 right-8 px-6 py-3 rounded-xl shadow-2xl text-white font-medium transform transition-all duration-300 z-50 flex items-center gap-2 ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-          {toast.type === 'success' ? <ThumbsUp size={18} /> : <X size={18} />}
+        <div
+          className={`fixed bottom-8 right-8 px-6 py-3 rounded-xl shadow-2xl text-white font-medium transform transition-all duration-300 z-50 flex items-center gap-2 ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}`}
+        >
+          {toast.type === "success" ? <ThumbsUp size={18} /> : <X size={18} />}
           {toast.message}
         </div>
       )}

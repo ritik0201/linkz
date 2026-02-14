@@ -4,6 +4,7 @@ export default function ProjectGrid() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       <ProjectCard
+        projectId="ai-task-manager"
         status="active"
         category="startup"
         title="AI-Powered Task Manager"
@@ -14,6 +15,7 @@ export default function ProjectGrid() {
       />
 
       <ProjectCard
+        projectId="fashion-marketplace"
         status="planning"
         category="ecommerce"
         title="Sustainable Fashion Marketplace"
@@ -24,6 +26,7 @@ export default function ProjectGrid() {
       />
 
       <ProjectCard
+        projectId="remote-collab-suite"
         status="active"
         category="business"
         title="Remote Team Collaboration Suite"

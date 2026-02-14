@@ -1,6 +1,10 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import Badge from "./Badge";
 
 export default function ProjectCard({
+  projectId,
   status,
   category,
   title,
@@ -9,6 +13,7 @@ export default function ProjectCard({
   tags,
   members,
 }: {
+  projectId: string;
   status: string;
   category: string;
   title: string;
@@ -17,8 +22,14 @@ export default function ProjectCard({
   tags: string[];
   members: string[];
 }) {
+  const router = useRouter();
+
   return (
-    <div className="border border-white/10 rounded-2xl p-6 bg-[#0B0D16] hover:border-blue-500/30 transition">
+    <div
+      onClick={() => router.push(`/workspace/${projectId}`)}
+      className="border border-white/10 rounded-2xl p-6 bg-[#0B0D16]
+                 hover:border-blue-500/30 transition cursor-pointer"
+    >
       <div className="flex gap-2 mb-3">
         <Badge label={status} />
         <Badge label={category} />

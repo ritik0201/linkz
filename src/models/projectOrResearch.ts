@@ -10,7 +10,12 @@ export interface IProjectOrResearch extends Document {
   userId: mongoose.Types.ObjectId;
   topic: string;
   coverImage: string;
+
+  // ✅ ADDED (minimal fix)
+  slug: string;
+
   teamMembers: string[];
+  approvedMembers: string[];
   description?: string;
   category: "project" | "research";
   link?: string;
@@ -38,13 +43,34 @@ const ProjectOrResearchSchema: Schema<IProjectOrResearch> = new Schema(
       type: String,
       required: [true, "Cover image is required"],
     },
+
+    // ✅ ADDED (minimal fix)
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
     teamMembers: {
       type: [String],
       default: [],
     },
-    description: { type: String },
-    category: { type: String, enum: ["project", "research"], default: "project" },
-    link: { type: String },
+    approvedMembers: {
+      type: [String],
+      default: [],
+    },
+    description: {
+      type: String,
+    },
+    category: {
+      type: String,
+      enum: ["project", "research"],
+      default: "project",
+    },
+    link: {
+      type: String,
+    },
     likes: {
       type: [String],
       default: [],
@@ -61,13 +87,17 @@ const ProjectOrResearchSchema: Schema<IProjectOrResearch> = new Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 if (mongoose.models.ProjectOrResearch) {
   delete mongoose.models.ProjectOrResearch;
 }
 
-const ProjectOrResearch: Model<IProjectOrResearch> = mongoose.model<IProjectOrResearch>("ProjectOrResearch", ProjectOrResearchSchema);
+const ProjectOrResearch: Model<IProjectOrResearch> =
+  mongoose.model<IProjectOrResearch>(
+    "ProjectOrResearch",
+    ProjectOrResearchSchema,
+  );
 
 export default ProjectOrResearch;

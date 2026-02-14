@@ -1,12 +1,29 @@
+"use client";
+
 import StatBox from "./StatBox";
 
-export default function StatsGrid() {
+interface Stat {
+  label: string;
+  value: string | number;
+}
+
+interface StatsGridProps {
+  stats?: Stat[]; // 👈 optional on purpose
+}
+
+export default function StatsGrid({ stats = [] }: StatsGridProps) {
+  // ✅ Guard clause (extra safety)
+  if (!Array.isArray(stats) || stats.length === 0) {
+    return (
+      <div className="text-white/40 text-sm">No statistics available.</div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <StatBox value="4" label="Total Projects" />
-      <StatBox value="2" label="Active Projects" />
-      <StatBox value="11" label="Total Contributors" />
-      <StatBox value="11" label="Contributions" />
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {stats.map((stat, index) => (
+        <StatBox key={index} label={stat.label} value={stat.value} />
+      ))}
     </div>
   );
 }
