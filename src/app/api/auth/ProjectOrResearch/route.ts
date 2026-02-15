@@ -128,8 +128,19 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
+    // Ensure slug exists before saving, as it is required by schema
+    if (!project.slug) {
+      project.slug = (project.topic || "untitled")
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
     if (action === "like") {
       if (!username) return NextResponse.json({ error: "Username required for like" }, { status: 400 });
+      if (!project.likes) project.likes = [];
       if (project.likes.includes(username)) {
         project.likes = project.likes.filter((u: string) => u !== username);
       } else {
@@ -137,6 +148,7 @@ export async function PATCH(req: Request) {
       }
     } else if (action === "interested") {
       if (!username) return NextResponse.json({ error: "Username required for interested" }, { status: 400 });
+      if (!project.interested) project.interested = [];
       if (project.interested.includes(username)) {
         project.interested = project.interested.filter((u: string) => u !== username);
       } else {
@@ -145,6 +157,9 @@ export async function PATCH(req: Request) {
     } else if (action === "approve") {
       if (!targetUser) return NextResponse.json({ error: "Target user required for approval" }, { status: 400 });
       
+      if (!project.interested) project.interested = [];
+      if (!project.teamMembers) project.teamMembers = [];
+
       // Remove from interested
       project.interested = project.interested.filter((u: string) => u !== targetUser);
       
@@ -154,6 +169,7 @@ export async function PATCH(req: Request) {
       }
     } else if (action === "comment") {
       if (!username || !text) return NextResponse.json({ error: "Username and text required for comment" }, { status: 400 });
+      if (!project.comments) project.comments = [];
       project.comments.push({ username, text, createdAt: new Date() });
     }
 
