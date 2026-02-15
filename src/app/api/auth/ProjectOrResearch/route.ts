@@ -43,9 +43,17 @@ export async function POST(req: Request) {
     // Upload image to Cloudinary
     const coverImageUrl = await uploadToCloudinary(coverImageFile);
 
+    const slug = topic
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
     const newEntry = await ProjectOrResearch.create({
       userId: userId,
       topic,
+      slug,
       coverImage: coverImageUrl,
       teamMembers: teamMembers ? teamMembers.split(',').map(s => s.trim()) : [],
       description,
