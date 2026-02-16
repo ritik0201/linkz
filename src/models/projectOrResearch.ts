@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IComment {
-  username: string;
+  userId: mongoose.Types.ObjectId;
+  username?: string;
   text: string;
   createdAt: Date;
 }
@@ -81,7 +82,8 @@ const ProjectOrResearchSchema: Schema<IProjectOrResearch> = new Schema(
     },
     comments: [
       {
-        username: { type: String, required: true },
+        userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+        username: { type: String },
         text: { type: String, required: true },
         createdAt: { type: Date, default: Date.now },
       },

@@ -22,6 +22,8 @@ Your Goals:
 
 Keep responses concise, well-formatted, and strictly focused on CollaBharat. If a user asks something unrelated, politely bring the conversation back to how CollaBharat can help them.`;
 
+let lastWorkingModel = "gemini-1.5-flash";
+
 export async function POST(req: Request) {
     try {
         const { message, history } = await req.json();
@@ -35,13 +37,13 @@ export async function POST(req: Request) {
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-        // Priority list of models we want to try in order
-        const modelNames = ["gemini-2.0-flash", "gemini-flash-latest", "gemini-pro-latest", "gemini-1.5-flash"];
+        // Priority list: Put the fasted model (1.5-flash) and the last working one at the top
+        const modelNames = Array.from(new Set([lastWorkingModel, "gemini-1.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]));
         let lastError = null;
 
         for (const modelName of modelNames) {
             try {
-                console.log(`>>> Attempting AI response with: ${modelName}`);
+                console.log(`>>> Attemping AI response with: ${modelName}`);
                 const model = genAI.getGenerativeModel({ model: modelName });
 
                 const chat = model.startChat({
@@ -54,7 +56,8 @@ export async function POST(req: Request) {
                             role: "model",
                             parts: [{ text: "Understood. I am the CollaBharat AI assistant. How can I help you today?" }],
                         },
-                        ...(history || []).map((msg: any) => ({
+                        // Limit history to last 10 messages for maximum speed
+                        ...(history || []).slice(-10).map((msg: any) => ({
                             role: msg.role === "user" ? "user" : "model",
                             parts: [{ text: msg.content }],
                         })),
@@ -67,47 +70,17 @@ export async function POST(req: Request) {
 
                 if (text) {
                     console.log(`>>> Success with model: ${modelName}`);
+                    lastWorkingModel = modelName; // Save for next time
                     return NextResponse.json({ text });
                 }
             } catch (err: any) {
                 console.warn(`>>> Model ${modelName} failed:`, err.message);
                 lastError = err;
-                continue; // Move to next model
+                continue;
             }
         }
 
-        // If all models in the list failed, try to discover ANY other valid model
-        try {
-            console.log(">>> Final attempt: Discovering any available model...");
-            const modelsResult = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`);
-            const modelsData = await modelsResult.json();
-
-            if (modelsData.models) {
-                const autoFound = modelsData.models.find((m: any) =>
-                    m.supportedGenerationMethods.includes("generateContent") &&
-                    !m.name.includes("vision") && !m.name.includes("tts")
-                );
-
-                if (autoFound) {
-                    const modelName = autoFound.name.replace("models/", "");
-                    console.log(`>>> Trying auto-discovered model: ${modelName}`);
-                    const model = genAI.getGenerativeModel({ model: modelName });
-                    const chat = model.startChat({
-                        history: [
-                            { role: "user", parts: [{ text: systemPrompt }] },
-                            { role: "model", parts: [{ text: "OK. I am ready." }] }
-                        ],
-                    });
-                    const result = await chat.sendMessage(message);
-                    const text = (await result.response).text();
-                    return NextResponse.json({ text });
-                }
-            }
-        } catch (e) {
-            console.error(">>> Auto-discovery also failed.");
-        }
-
-        throw lastError || new Error("All AI models failed to respond. Please check your API key quota and permissions.");
+        throw lastError || new Error("All AI models failed to respond. Please check your API key.");
     } catch (error: any) {
         console.error("Chatbot API Final Error:", error);
         return NextResponse.json(
