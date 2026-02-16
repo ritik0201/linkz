@@ -3,6 +3,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
+import Chatbot from "@/components/Chatbot";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://collab-bharat.online"),
@@ -63,6 +64,7 @@ export default function RootLayout({
       <body>
         <Providers>
           <Navbar />
+          <Chatbot />
           {children}
           <Footer />
         </Providers>

@@ -10,7 +10,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession, signOut } from "next-auth/react";
 import InstallPWAButton from "./InstallPWAButton";
-import Chatbot from "./Chatbot";
 
 const Navbar = () => {
     const { data: session } = useSession();
@@ -27,7 +26,6 @@ const Navbar = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [loopNum, setLoopNum] = useState(0);
     const [userAvatar, setUserAvatar] = useState("");
-    const [isChatOpen, setIsChatOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -206,22 +204,6 @@ const Navbar = () => {
 
                         {/* Navigation Icons */}
                         <div className="flex items-center gap-1 md:gap-4">
-                            {/* AI Assistant Toggle */}
-                            <div className="relative">
-                                <button
-                                    onClick={() => setIsChatOpen(!isChatOpen)}
-                                    className={`p-2 rounded-full border transition-all flex items-center gap-2 group ${isChatOpen
-                                        ? "bg-indigo-600 text-white border-indigo-500 shadow-[0_0_15px_rgba(79,70,229,0.4)]"
-                                        : "bg-indigo-600/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-600/20 hover:border-indigo-500/40"
-                                        }`}
-                                >
-                                    <Sparkles size={18} className={isChatOpen ? "animate-pulse" : "group-hover:rotate-12 transition-transform"} />
-                                    <span className="text-[10px] font-bold uppercase tracking-wider hidden lg:block">AI Assistant</span>
-                                </button>
-
-                                <Chatbot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
-                            </div>
-
                             <Link href="/" className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full transition-colors relative group">
                                 <Home size={22} />
                                 <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Home</span>

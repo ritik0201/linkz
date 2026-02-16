@@ -1244,6 +1244,9 @@ const LinkedInProfilePage = () => {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [showAllPosts, setShowAllPosts] = useState(false);
+  const [teamPosts, setTeamPosts] = useState<any[]>([]);
+  const [showAllTeamPosts, setShowAllTeamPosts] = useState(false);
+  const [teamPostsLoading, setTeamPostsLoading] = useState(true);
 
   useEffect(() => {
     if (toast) {
@@ -1319,8 +1322,50 @@ const LinkedInProfilePage = () => {
         }
       };
 
+      const fetchTeamPosts = async () => {
+        setTeamPostsLoading(true);
+        try {
+          const res = await fetch(
+            `/api/auth/ProjectOrResearch?teamMember=${username}`,
+          );
+          if (res.ok) {
+            const data = await res.json();
+            // Filter out posts where the author is the current profile user to avoid duplicates
+            const filteredPosts = (data.data || []).filter(
+              (post: any) => post.userId?.username !== username,
+            );
+            const sortedPosts = filteredPosts.sort(
+              (a: any, b: any) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+            );
+            const formattedPosts = sortedPosts.map((post: any) => ({
+              id: post._id,
+              author: {
+                name: post.userId?.fullName,
+                username: post.userId?.username,
+                avatar: post.userId?.profileImage,
+                headline: post.userId?.headline,
+              },
+              timestamp: new Date(post.createdAt).toLocaleDateString(),
+              content: post.description,
+              coverImage: post.coverImage,
+              likes: post.likes || [],
+              interested: post.interested || [],
+              comments: post.comments?.length || 0,
+            }));
+            setTeamPosts(formattedPosts);
+          }
+        } catch (err) {
+          console.error("Failed to fetch team posts", err);
+        } finally {
+          setTeamPostsLoading(false);
+        }
+      };
+
       fetchProfile();
       fetchPosts();
+      fetchTeamPosts();
     }
   }, [username, session]);
 
@@ -1984,6 +2029,179 @@ const LinkedInProfilePage = () => {
                 >
                   View all posts
                 </button>
+              </div>
+            )}
+          </div>
+
+          {/* Team Posts Section */}
+          <div className="bg-[#2b2b2b] rounded-2xl shadow-lg border border-zinc-700">
+            <h2 className="text-2xl font-bold p-6 pb-4">
+              Team Collaborations
+            </h2>
+            {teamPostsLoading ? (
+              <div className="p-6 text-center text-zinc-400">
+                <Loader2 size={20} className="animate-spin inline-block mr-2" />{" "}
+                Loading collaborations...
+              </div>
+            ) : teamPosts.length > 0 ? (
+              <>
+                <div className="divide-y divide-zinc-700/50">
+                  {(showAllTeamPosts ? teamPosts : teamPosts.slice(0, 1)).map(
+                    (post) => (
+                      <div key={post.id} className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-3">
+                            <Link href={`/user/${post.author.username}`}>
+                              <img
+                                className="w-12 h-12 rounded-full object-cover cursor-pointer"
+                                src={post.author.avatar || "user.png"}
+                                alt={`${post.author.name}'s avatar`}
+                              />
+                            </Link>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <Link
+                                  href={`/user/${post.author.username}`}
+                                  className="hover:underline"
+                                >
+                                  <p className="font-bold text-white">
+                                    {post.author.name || "Unknown"}
+                                  </p>
+                                </Link>
+                                {post.author.username && (
+                                  <span className="text-xs text-zinc-500">
+                                    @{post.author.username}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-zinc-400">
+                                {post.author.headline}
+                              </p>
+                              <p className="text-xs text-zinc-500 mt-1">
+                                {post.timestamp}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuPostId(
+                                  activeMenuPostId === post.id ? null : post.id,
+                                );
+                              }}
+                              className="text-zinc-400 hover:text-white p-2 hover:bg-zinc-800 rounded-full transition-colors"
+                            >
+                              <MoreHorizontal size={20} />
+                            </button>
+                            {activeMenuPostId === post.id && (
+                              <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1a1a] border border-zinc-700 rounded-xl shadow-xl z-10 overflow-hidden">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push(
+                                      `/user/${post.author.username}/post/${post.id}`,
+                                    );
+                                  }}
+                                  className="w-full text-left px-4 py-3 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                                >
+                                  View Post Detail
+                                </button>
+                                {session?.user?.username ===
+                                  post.author.username && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeletePost(post.id);
+                                    }}
+                                    className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-zinc-800 hover:text-red-300 transition-colors"
+                                  >
+                                    Delete Post
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <p className="mt-4 text-zinc-300 whitespace-pre-wrap">
+                          {post.content}
+                        </p>
+                        {post.coverImage && (
+                          <div className="mt-4 rounded-xl overflow-hidden border border-zinc-700">
+                            <img
+                              src={post.coverImage}
+                              alt="Post content"
+                              className="w-full h-auto object-cover max-h-500px"
+                            />
+                          </div>
+                        )}
+                        <div className="mt-4 flex items-center justify-between text-zinc-400 text-sm">
+                          <div className="flex items-center gap-1.5">
+                            <ThumbsUp size={14} className="text-green-500" />
+                            <span>{post.likes.length}</span>
+                          </div>
+                          {post.interested && post.interested.length > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <Star size={14} className="text-yellow-500" />
+                              <span>{post.interested.length} interested</span>
+                            </div>
+                          )}
+                          <span>{post.comments} comments</span>
+                        </div>
+                        <div className="mt-4 pt-3 border-t border-zinc-700 flex gap-1 md:gap-2">
+                          <button
+                            onClick={() => handleInteraction(post.id, "like")}
+                            className={`flex items-center gap-1 md:gap-2 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm ${post.likes.includes(session?.user?.username) ? "text-blue-400 bg-blue-500/10" : "text-zinc-300 hover:bg-zinc-700"}`}
+                          >
+                            <ThumbsUp
+                              className={`w-4 h-4 md:w-5 md:h-5 ${post.likes.includes(session?.user?.username) ? "fill-current" : ""}`}
+                            />{" "}
+                            Like
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleInteraction(post.id, "interested")
+                            }
+                            className={`flex items-center gap-1 md:gap-2 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm ${post.interested?.includes(session?.user?.username) ? "text-yellow-400 bg-yellow-500/10" : "text-zinc-300 hover:bg-zinc-700"}`}
+                          >
+                            <Star
+                              className={`w-4 h-4 md:w-5 md:h-5 ${post.interested?.includes(session?.user?.username) ? "fill-current" : ""}`}
+                            />{" "}
+                            Interested
+                          </button>
+                          <button
+                            onClick={() =>
+                              router.push(
+                                `/user/${post.author.username}/post/${post.id}?tab=comments`,
+                              )
+                            }
+                            className="flex items-center gap-1 md:gap-2 text-zinc-300 hover:bg-zinc-700 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm"
+                          >
+                            <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />{" "}
+                            Comment
+                          </button>
+                          <button className="flex items-center gap-1 md:gap-2 text-zinc-300 hover:bg-zinc-700 py-1.5 px-2 md:py-2 md:px-3 rounded-lg transition-colors w-full justify-center text-xs md:text-sm">
+                            <Share2 className="w-4 h-4 md:w-5 md:h-5" /> Share
+                          </button>
+                        </div>
+                      </div>
+                    ),
+                  )}
+                </div>
+                {teamPosts.length > 1 && !showAllTeamPosts && (
+                  <div className="border-t border-zinc-700/50 p-4 text-center">
+                    <button
+                      onClick={() => setShowAllTeamPosts(true)}
+                      className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+                    >
+                      View all collaborations
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="p-6 text-center text-zinc-500">
+                No team collaborations to show.
               </div>
             )}
           </div>

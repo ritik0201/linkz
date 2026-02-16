@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ThumbsUp, Star, ArrowLeft, Users, Check, Briefcase, MessageSquare, Send, Trash2 } from 'lucide-react';
+import { ThumbsUp, Star, ArrowLeft, Users, Check, Briefcase, MessageSquare, Send, Trash2, Layout } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
@@ -325,15 +325,21 @@ export default function PostDetailPage() {
                 <h1 className="text-3xl md:text-4xl font-bold leading-tight bg-linear-to-r from-white to-zinc-300 bg-clip-text text-transparent">
                   {post.topic}
                 </h1>
-                {isOwner && (
-                  <button
-                    onClick={handleDeleteClick}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors border border-red-600/30"
-                  >
-                    <Trash2 size={16} />
-                    Delete
-                  </button>
-                )}
+                <div className="flex items-center gap-4">
+                  <Link href={`/user/${params.username}/post/${postId}/workspace`} className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 hover:text-indigo-300 border border-indigo-500/20 rounded-lg transition-all duration-300 font-medium text-sm group">
+                    <Layout size={16} className="group-hover:scale-110 transition-transform" />
+                    <span>Workspace</span>
+                  </Link>
+                  {isOwner && (
+                    <button
+                      onClick={handleDeleteClick}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors border border-red-600/30"
+                    >
+                      <Trash2 size={16} />
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Post Content */}

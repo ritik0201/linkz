@@ -46,8 +46,9 @@ export async function POST(req: Request) {
 
         const newPost = await Post.create({
             userId,
-            content,
-            image: imageUrl,
+            description: content,
+            coverImage: imageUrl,
+            topic: "General Update",
         });
 
         // Populate user info before returning
@@ -104,36 +105,14 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        // To implement pagination across two collections, we first get sorted IDs
-        const postMetas = await Post.find({}, '_id createdAt').lean();
-        const projectMetas = await ProjectOrResearch.find({}, '_id createdAt').lean();
-
-        const combinedMetas = [
-            ...postMetas.map(p => ({ ...p, type: 'post' })),
-            ...projectMetas.map(p => ({ ...p, type: 'project' }))
-        ];
-
-        // Shuffle combinedMetas for random combination
-        for (let i = combinedMetas.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [combinedMetas[i], combinedMetas[j]] = [combinedMetas[j], combinedMetas[i]];
-        }
-
-        const totalItems = combinedMetas.length;
-        const paginatedMetas = combinedMetas.slice(skip, skip + limit);
-
-        const postIdsToFetch = paginatedMetas.filter(m => m.type === 'post').map(m => m._id);
-        const projectIdsToFetch = paginatedMetas.filter(m => m.type === 'project').map(m => m._id);
-
-        // Fetch full documents for the current page
-        const posts = postIdsToFetch.length > 0 ? await Post.find({ _id: { $in: postIdsToFetch } })
+        const totalItems = await Post.countDocuments({});
+        const posts = await Post.find({})
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
             .populate("userId", "fullName username profileImage")
             .populate("comments.userId", "fullName username profileImage")
-            .lean() : [];
-
-        const projects = projectIdsToFetch.length > 0 ? await ProjectOrResearch.find({ _id: { $in: projectIdsToFetch } })
-            .populate("userId", "fullName username profileImage")
-            .lean() : [];
+            .lean();
 
         // Collect user IDs and fetch profiles to get profile pictures
         // This is necessary to get the most up-to-date profile pictures for users in the feed
@@ -149,7 +128,6 @@ export async function GET(req: NextRequest) {
             });
         };
         collectIds(posts);
-        collectIds(projects);
 
         const profiles = await Profile.find({ user: { $in: Array.from(userIds) } }).select('user profilePicture').lean();
         const profileMap: Record<string, string> = {};
@@ -181,31 +159,20 @@ export async function GET(req: NextRequest) {
             });
         };
         attachImages(posts);
-        attachImages(projects);
 
         // Normalize and combine
-        const combinedFeed = [
-            ...posts.map((p: any) => ({ ...p, type: 'post' })),
-            ...projects.map((p: any) => ({
+        const combinedFeed = posts.map((p: any) => ({
                 ...p,
-                type: 'project',
-                content: p.topic + (p.description ? "\n\n" + p.description : ""),
+                type: 'post',
+                content: p.description || p.topic,
                 image: p.coverImage,
-                // comments is already present in projects from the DB
-            }))
-        ];
-
-        // Shuffle combinedFeed to mix posts and projects
-        for (let i = combinedFeed.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [combinedFeed[i], combinedFeed[j]] = [combinedFeed[j], combinedFeed[i]];
-        }
+        }));
 
         return NextResponse.json({
             data: combinedFeed,
             currentUserProfile,
             pagination: {
-                hasMore: skip + combinedFeed.length < totalItems
+                hasMore: skip + posts.length < totalItems
             }
         }, { status: 200 });
     } catch (error: any) {
@@ -239,7 +206,7 @@ export async function PATCH(req: Request) {
             }
         } else if (action === "comment") {
             if (!text) return NextResponse.json({ error: "Comment text required" }, { status: 400 });
-            post.comments.push({ userId, text, createdAt: new Date() });
+            post.comments.push({ userId, text, createdAt: new Date() } as any);
         }
 
         await post.save();

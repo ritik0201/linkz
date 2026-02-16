@@ -9,12 +9,8 @@ interface Message {
     content: string;
 }
 
-interface ChatbotProps {
-    isOpen: boolean;
-    onClose: () => void;
-}
-
-const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
+const Chatbot: React.FC = () => {
+    const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
         { role: "ai", content: "Hi! I'm CollaBharat AI. How can I help you today?" },
     ]);
@@ -66,26 +62,32 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
     };
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <>
-                    {/* Transparent Backdrop for click-away */}
-                    <div
-                        className="fixed inset-0 z-[60]"
-                        onClick={onClose}
-                    />
+        <div
+            className="fixed bottom-6 right-6 z-[100] flex flex-col-reverse items-end gap-4"
+            onMouseEnter={() => setIsOpen(true)}
+            onMouseLeave={() => setIsOpen(false)}
+        >
+            <button
+                className={`p-3.5 rounded-full border transition-all flex items-center gap-3 shadow-2xl ${isOpen
+                    ? "bg-indigo-600 text-white border-indigo-500 shadow-indigo-500/20"
+                    : "bg-zinc-900/90 backdrop-blur-md border-zinc-700/50 text-zinc-400 hover:text-white hover:bg-zinc-800 hover:border-zinc-600 hover:scale-105"
+                    }`}
+            >
+                <Sparkles size={22} className={isOpen ? "animate-pulse" : "group-hover:rotate-12 transition-transform"} />
+                <span className={`font-bold text-sm transition-all duration-300 overflow-hidden whitespace-nowrap ${isOpen ? "max-w-[100px] opacity-100" : "max-w-0 opacity-0 sm:max-w-[100px] sm:opacity-100"}`}>
+                    AI Assistant
+                </span>
+            </button>
 
-                    {/* Chat Popover */}
+            <AnimatePresence>
+                {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 20, scale: 0.95, x: 20, transformOrigin: "bottom right" }}
+                        animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.95, x: 20 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute top-full right-0 mt-3 w-[320px] sm:w-[380px] h-[500px] bg-[#0d0d0d] border border-zinc-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[70] flex flex-col overflow-hidden ring-1 ring-white/10"
+                        className="w-[320px] sm:w-[380px] h-[500px] bg-[#0d0d0d] border border-zinc-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden ring-1 ring-white/10"
                     >
-                        {/* Arrow */}
-                        <div className="absolute -top-1.5 right-6 w-3 h-3 bg-[#0d0d0d] border-l border-t border-zinc-800 rotate-45 transform" />
-
                         {/* Header */}
                         <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/40 backdrop-blur-md">
                             <div className="flex items-center gap-3">
@@ -101,7 +103,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
                                 </div>
                             </div>
                             <button
-                                onClick={onClose}
+                                onClick={() => setIsOpen(false)}
                                 className="p-1.5 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
                             >
                                 <X size={18} />
@@ -175,9 +177,9 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
                             </div>
                         </div>
                     </motion.div>
-                </>
-            )}
-        </AnimatePresence>
+                )}
+            </AnimatePresence>
+        </div>
     );
 };
 
