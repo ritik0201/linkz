@@ -29,6 +29,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import CreatePostModal from "@/components/CreatePostModal";
+import NetworkModal from "@/components/NetworkModal";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -73,7 +74,13 @@ interface ProfileData {
   }[];
 }
 
-const ProfileSidebarCard = ({ profile }: { profile: ProfileData }) => (
+const ProfileSidebarCard = ({
+  profile,
+  onOpenNetwork,
+}: {
+  profile: ProfileData;
+  onOpenNetwork: (type: "followers" | "following") => void;
+}) => (
   <div className="bg-[#2b2b2b] rounded-2xl overflow-hidden shadow-lg border border-zinc-700">
     <div
       className="h-20 bg-cover bg-center"
@@ -97,13 +104,19 @@ const ProfileSidebarCard = ({ profile }: { profile: ProfileData }) => (
         <p className="text-zinc-400 text-sm mt-1">{profile.headline}</p>
       </div>
       <div className="mt-4 pt-4 border-t border-zinc-700/50 text-left space-y-1">
-        <div className="flex justify-between items-center text-sm text-zinc-400 hover:bg-zinc-800/50 px-2 py-1.5 rounded-md transition-colors cursor-pointer">
+        <div
+          onClick={() => onOpenNetwork("followers")}
+          className="flex justify-between items-center text-sm text-zinc-400 hover:bg-zinc-800/50 px-2 py-1.5 rounded-md transition-colors cursor-pointer"
+        >
           <span className="font-semibold">Followers</span>
           <span className="text-indigo-400 font-bold">
             {profile.followers?.length || 0}
           </span>
         </div>
-        <div className="flex justify-between items-center text-sm text-zinc-400 hover:bg-zinc-800/50 px-2 py-1.5 rounded-md transition-colors cursor-pointer">
+        <div
+          onClick={() => onOpenNetwork("following")}
+          className="flex justify-between items-center text-sm text-zinc-400 hover:bg-zinc-800/50 px-2 py-1.5 rounded-md transition-colors cursor-pointer"
+        >
           <span className="font-semibold">Following</span>
           <span className="text-indigo-400 font-bold">
             {profile.following?.length || 0}
@@ -202,11 +215,10 @@ const SuggestionItem = ({
           <button
             onClick={handleFollowToggle}
             disabled={isLoading}
-            className={`flex items-center justify-center gap-1.5 w-24 text-xs font-bold py-1.5 rounded-full transition-colors disabled:opacity-50 ${
-              isFollowing
-                ? "bg-zinc-700 hover:bg-zinc-600 text-white"
-                : "bg-indigo-600 hover:bg-indigo-700 text-white"
-            }`}
+            className={`flex items-center justify-center gap-1.5 w-24 text-xs font-bold py-1.5 rounded-full transition-colors disabled:opacity-50 ${isFollowing
+              ? "bg-zinc-700 hover:bg-zinc-600 text-white"
+              : "bg-indigo-600 hover:bg-indigo-700 text-white"
+              }`}
           >
             {isLoading ? (
               <Loader2 size={14} className="animate-spin" />
@@ -1247,6 +1259,13 @@ const LinkedInProfilePage = () => {
   const [teamPosts, setTeamPosts] = useState<any[]>([]);
   const [showAllTeamPosts, setShowAllTeamPosts] = useState(false);
   const [teamPostsLoading, setTeamPostsLoading] = useState(true);
+  const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
+  const [networkType, setNetworkType] = useState<"followers" | "following">("followers");
+
+  const handleOpenNetwork = (type: "followers" | "following") => {
+    setNetworkType(type);
+    setIsNetworkModalOpen(true);
+  };
 
   useEffect(() => {
     if (toast) {
@@ -1531,9 +1550,9 @@ const LinkedInProfilePage = () => {
       setProfile((prev) =>
         prev
           ? {
-              ...prev,
-              ...data,
-            }
+            ...prev,
+            ...data,
+          }
           : null,
       );
     } catch (err) {
@@ -1610,11 +1629,21 @@ const LinkedInProfilePage = () => {
   const isOwnProfile = session?.user?.email === user.email;
 
   return (
-    <div className="bg-[#1a1a1a] min-h-screen text-white font-sans pt-16">
-      <div className="container mx-auto grid max-w-7xl grid-cols-12 gap-6 px-4 py-8">
+    <div className="bg-[#1a1a1a] min-h-screen text-white font-sans">
+      {/* Network Modal */}
+      <NetworkModal
+        isOpen={isNetworkModalOpen}
+        onClose={() => setIsNetworkModalOpen(false)}
+        type={networkType}
+        username={username}
+      />
+
+      {/* Navbar (Assuming Navbar is global or included in layout, if not present here) */}
+
+      <div className="container mx-auto grid max-w-7xl grid-cols-12 gap-6 px-4 py-8 pt-24">
         {/* Left Sidebar */}
         <div className="hidden lg:col-span-3 lg:block space-y-6 self-start sticky top-8">
-          <ProfileSidebarCard profile={profile} />
+          <ProfileSidebarCard profile={profile} onOpenNetwork={handleOpenNetwork} />
           <GroupsSidebarCard />
           {isOwnProfile && (
             <button
@@ -1908,10 +1937,10 @@ const LinkedInProfilePage = () => {
                           </Link>
                           {(post.author.username ||
                             profile?.user?.username) && (
-                            <span className="text-xs text-zinc-500">
-                              @{post.author.username || profile?.user?.username}
-                            </span>
-                          )}
+                              <span className="text-xs text-zinc-500">
+                                @{post.author.username || profile?.user?.username}
+                              </span>
+                            )}
                         </div>
                         <p className="text-sm text-zinc-400">
                           {post.author.headline || profile?.headline}
@@ -2109,16 +2138,16 @@ const LinkedInProfilePage = () => {
                                 </button>
                                 {session?.user?.username ===
                                   post.author.username && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeletePost(post.id);
-                                    }}
-                                    className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-zinc-800 hover:text-red-300 transition-colors"
-                                  >
-                                    Delete Post
-                                  </button>
-                                )}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeletePost(post.id);
+                                      }}
+                                      className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-zinc-800 hover:text-red-300 transition-colors"
+                                    >
+                                      Delete Post
+                                    </button>
+                                  )}
                               </div>
                             )}
                           </div>
@@ -2262,9 +2291,9 @@ const LinkedInProfilePage = () => {
                         ? "Present"
                         : exp.endDate
                           ? new Date(exp.endDate).toLocaleDateString("en-US", {
-                              month: "short",
-                              year: "numeric",
-                            })
+                            month: "short",
+                            year: "numeric",
+                          })
                           : "Present"}
                     </p>
                     {exp.location && (
