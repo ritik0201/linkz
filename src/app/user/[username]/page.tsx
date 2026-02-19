@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import CreatePostModal from "@/components/CreatePostModal";
 import NetworkModal from "@/components/NetworkModal";
+import DashboardFooter from "@/components/DashboardFooter";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -1653,6 +1654,7 @@ const LinkedInProfilePage = () => {
               <LogOut size={20} /> Logout
             </button>
           )}
+          <DashboardFooter />
         </div>
 
         {/* Main Content */}

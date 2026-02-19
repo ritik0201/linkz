@@ -7,6 +7,7 @@ import { ArrowRight, Rocket, Users, Target, Shield, Loader2, PlusCircle, MapPin,
 import Navbar from "@/components/navbar";
 // import Footer from "@/components/footer";
 import CreatePostModal from "@/components/CreatePostModal";
+import DashboardFooter from "@/components/DashboardFooter";
 import { useSession } from "next-auth/react";
 import PosterCard from "@/components/PosterCard";
 
@@ -386,7 +387,7 @@ export default function Home() {
             <div className="hidden lg:block lg:col-span-3 sticky top-24 self-start">
               <SuggestionsCard />
               <NewsCard posts={items} />
-              <FooterLinks />
+              <DashboardFooter />
             </div>
           </div>
         </div>
@@ -597,20 +598,7 @@ const NewsCard = ({ posts }: { posts: FeedItem[] }) => {
   );
 };
 
-const FooterLinks = () => (
-  <div className="mt-6 text-center px-4">
-    <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-zinc-500">
-      {["About", "Accessibility", "Help Center", "Privacy & Terms", "Ad Choices", "Advertising", "Business Services", "Get the CollaBharat app", "More"].map((link) => (
-        <Link key={link} href="#" className="hover:text-indigo-400 hover:underline">{link}</Link>
-      ))}
-    </div>
-    <div className="mt-4 flex items-center justify-center gap-1 text-xs text-zinc-400">
-      <img src="/logo.png" alt="CollaBharat Logo" className="w-5 h-5" />
-      <span className="font-bold text-indigo-500">CollaBharat</span>
-      <span>© 2024</span>
-    </div>
-  </div>
-);
+// FooterLinks replaced by DashboardFooter
 
 const SuggestionItem = ({ user, onFollow, isFollowing: initialIsFollowing }: { user: UserSummary; onFollow: () => void; isFollowing: boolean }) => {
   const { data: session } = useSession();
@@ -662,8 +650,8 @@ const SuggestionItem = ({ user, onFollow, isFollowing: initialIsFollowing }: { u
             onClick={handleFollowToggle}
             disabled={isLoading}
             className={`flex items-center justify-center gap-1.5 w-24 text-xs font-bold py-1.5 rounded-full transition-colors disabled:opacity-50 ${isFollowing
-                ? 'bg-zinc-700 hover:bg-zinc-600 text-white'
-                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              ? 'bg-zinc-700 hover:bg-zinc-600 text-white'
+              : 'bg-indigo-600 hover:bg-indigo-700 text-white'
               }`}
           >
             {isLoading ? <Loader2 size={14} className="animate-spin" /> : (isFollowing ? 'Following' : 'Follow')}
