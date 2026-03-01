@@ -9,6 +9,14 @@ export interface ITask extends Types.Subdocument {
     createdAt: Date;
 }
 
+export interface IMeeting extends Types.Subdocument {
+  title: string;
+  date: Date;
+  link: string;
+  createdBy: mongoose.Types.ObjectId;
+}
+
+
 export interface IWorkspace extends Document {
     name: string;
     description?: string;
@@ -16,6 +24,7 @@ export interface IWorkspace extends Document {
     projectId: mongoose.Types.ObjectId;
     members: mongoose.Types.ObjectId[];
     tasks: Types.DocumentArray<ITask>;
+    meetings: Types.DocumentArray<IMeeting>;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -33,6 +42,13 @@ const TaskSchema = new Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+const MeetingSchema = new Schema({
+  title: { type: String, required: true },
+  date: { type: Date, required: true },
+  link: { type: String, required: true },
+  createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+});
+
 const WorkspaceSchema = new Schema(
     {
         name: { type: String, required: true },
@@ -40,7 +56,8 @@ const WorkspaceSchema = new Schema(
         createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
         projectId: { type: Schema.Types.ObjectId, ref: 'ProjectOrResearch', required: true },
         members: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-        tasks: [TaskSchema]
+        tasks: [TaskSchema],
+        meetings: [MeetingSchema],
     },
     { timestamps: true }
 );
