@@ -2,7 +2,7 @@ import Link from "next/link";
 import React from "react";
 
 const footerLinks = [
-    { label: "About", href: "/about" },
+    { label: "About Us", href: "/about" },
     { label: "Accessibility", href: "/accessibility" },
     { label: "Help Center", href: "/help" },
     { label: "Privacy & Terms", href: "/privacy" },
