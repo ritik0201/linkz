@@ -48,6 +48,7 @@ interface ProfileData {
   bio?: string;
   location?: string;
   profilePicture?: string;
+  backgroundImage?: string;
   followers: string[];
   following: string[];
   links: { title: string; url: string }[];
@@ -86,8 +87,7 @@ const ProfileSidebarCard = ({
     <div
       className="h-20 bg-cover bg-center"
       style={{
-        backgroundImage:
-          "url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2070&auto=format&fit=crop')",
+        backgroundImage: `url(${profile.backgroundImage || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2070&auto=format&fit=crop'})`,
       }}
     ></div>
     <div className="p-4 text-center relative">
@@ -1242,6 +1242,7 @@ const LinkedInProfilePage = () => {
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
   const [isCertificatesModalOpen, setIsCertificatesModalOpen] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const backgroundFileInputRef = React.useRef<HTMLInputElement>(null);
   const [activeMenuPostId, setActiveMenuPostId] = useState<
     string | number | null
   >(null);
@@ -1612,6 +1613,7 @@ const LinkedInProfilePage = () => {
     education,
     experience,
     certificates,
+    backgroundImage,
   } = profile;
 
   const latestExperience =
@@ -1663,12 +1665,41 @@ const LinkedInProfilePage = () => {
           <div className="bg-[#2b2b2b] rounded-2xl overflow-hidden shadow-lg border border-zinc-700">
             {/* Cover Photo */}
             <div
-              className="h-48 bg-cover bg-center"
+              className="h-48 bg-cover bg-center relative group"
               style={{
-                backgroundImage:
-                  "url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2070&auto=format&fit=crop')",
+                backgroundImage: `url(${backgroundImage || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2070&auto=format&fit=crop'})`,
               }}
-            ></div>
+            >
+              {isOwnProfile && (
+                <>
+                  <button
+                    onClick={() => backgroundFileInputRef.current?.click()}
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm border border-white/30">
+                      <Camera size={24} className="text-white" />
+                    </div>
+                  </button>
+                  <input
+                    type="file"
+                    ref={backgroundFileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64String = reader.result as string;
+                          handleSaveProfile({ backgroundImage: base64String });
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </>
+              )}
+            </div>
 
             <div className="p-6 relative">
               {/* Profile Picture */}
