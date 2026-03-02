@@ -22,7 +22,7 @@ const DashboardFooter = () => (
             ))}
         </div>
         <div className="mt-4 flex items-center justify-center gap-1 text-xs text-zinc-400">
-            <img src="/logo.png" alt="CollaBharat Logo" className="w-12 h-12" />
+            <img src="/logo.png" alt="CollaBharat Logo" className="w-5 h-5" />
             <span className="font-bold text-indigo-500">CollaBharat</span>
             <span>© {new Date().getFullYear()}</span>
         </div>

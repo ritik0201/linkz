@@ -53,6 +53,7 @@ export async function GET(req: Request) {
             bio: "",
             location: "",
             profilePicture: "",
+            backgroundImage: "",
             links: [],
             skills: [],
             certificates: [],

@@ -12,7 +12,7 @@ const Footer = () => {
                     {/* Brand Column */}
                     <div className="space-y-4">
                         <Link href="/" className="flex items-center gap-2 group">
-                            <img src="/logo.png" alt="CollaBhart Logo" className="w-16 h-16 rounded-lg shadow-lg group-hover:scale-110 transition-transform" />
+                            <img src="/logo.png" alt="CollaBhart Logo" className="w-8 h-8 rounded-lg shadow-lg group-hover:scale-110 transition-transform" />
                             <span className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">
                                 CollaBharat
                             </span>

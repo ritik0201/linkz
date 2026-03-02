@@ -6,6 +6,7 @@ export interface IProfile extends Document {
   bio?: string;
   location?: string;
   profilePicture?: string;
+  backgroundImage?: string;
   followers: Types.ObjectId[];
   following: Types.ObjectId[];
   links: { title: string; url: string }[];
@@ -54,6 +55,9 @@ const ProfileSchema = new Schema<IProfile>(
       type: String,
     },
     profilePicture: {
+      type: String,
+    },
+    backgroundImage: {
       type: String,
     },
     followers: [
