@@ -16,19 +16,25 @@ export async function GET(req: Request) {
   try {
     // 1. Handle Public Profile Fetch (by userid query param)
     if (queryUserId) {
+      console.time(`profile-fetch-${queryUserId}`);
+
+      // Try username first as it's the most common and indexed
       let userResult: any = await User.findOne({ username: queryUserId }).select("fullName email username profileImage role mobile");
 
-      if (!userResult && isValidObjectId(queryUserId)) {
-        userResult = await User.findById(queryUserId).select("fullName email username profileImage role mobile");
-      }
-
       if (!userResult) {
-        userResult = await User.findOne({ email: queryUserId }).select("fullName email username profileImage role mobile");
-      }
+        // Parallelize fallback searches
+        const searches = [
+          isValidObjectId(queryUserId) ? User.findById(queryUserId).select("fullName email username profileImage role mobile") : null,
+          User.findOne({ email: queryUserId }).select("fullName email username profileImage role mobile"),
+        ].filter(Boolean);
 
-      if (!userResult) {
-        const escapedUserId = queryUserId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        userResult = await User.findOne({ email: { $regex: new RegExp(`^${escapedUserId}@`, 'i') } }).select("fullName email username profileImage role mobile");
+        const results = await Promise.all(searches);
+        userResult = results.find(r => r);
+
+        if (!userResult) {
+          const escapedUserId = queryUserId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          userResult = await User.findOne({ email: { $regex: new RegExp(`^${escapedUserId}@`, 'i') } }).select("fullName email username profileImage role mobile");
+        }
       }
 
       if (!userResult) {
@@ -63,6 +69,7 @@ export async function GET(req: Request) {
         }, { status: 200 });
       }
 
+      console.timeEnd(`profile-fetch-${queryUserId}`);
       return NextResponse.json({ success: true, data: profile }, { status: 200 });
     }
 
@@ -166,6 +173,7 @@ export async function POST(req: Request) {
       select: "fullName email username profileImage role mobile",
     });
 
+    console.log(`Profile updated for user: ${userId}`);
     return NextResponse.json({ success: true, data: updatedProfile }, { status: 200 });
   } catch (error) {
     console.error("Error updating profile:", error);
